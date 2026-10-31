@@ -1,0 +1,10 @@
+/vendor/
+/database/*.sqlite
+/.env
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+/.phpunit.result.cache
+composer.lock
+.vscode/

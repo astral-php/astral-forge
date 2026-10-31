@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "mon-application",
+    "target": "astral-starter-2.1"
+  },
+  "recipe": "blank",
+  "features": {
+    "authentication": true,
+    "admin_users": true,
+    "api": false
+  },
+  "views": {
+    "engine": "php"
+  },
+  "packages": []
+}

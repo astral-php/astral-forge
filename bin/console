@@ -1,0 +1,81 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+define('BASE_PATH', dirname(__DIR__));
+
+require BASE_PATH . '/vendor/autoload.php';
+
+if (file_exists(BASE_PATH . '/.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
+    $dotenv->safeLoad();
+}
+
+use Core\Console\Console;
+use Core\Console\Commands\ClearCacheCommand;
+use Core\Console\Commands\MakeControllerCommand;
+use Core\Console\Commands\MakeDaoCommand;
+use Core\Console\Commands\MakeMigrationCommand;
+use Core\Console\Commands\MakeModelCommand;
+use Core\Console\Commands\MakeModuleCommand;
+use Core\Console\Commands\MigrateCommand;
+use Core\Console\Commands\MigrateRollbackCommand;
+use Core\Console\Commands\MigrateStatusCommand;
+use Database\Connection;
+use Database\Migration\Migrator;
+
+use App\Console\ForgeGenerateCommand;
+use App\Console\ForgePlanCommand;
+use App\Forge\Blueprint\BlueprintValidator;
+use App\Forge\Plan\GenerationPlanner;
+use App\Forge\ProjectGenerationService;
+use App\Forge\Resolver\DependencyResolver;
+use App\Forge\Security\SecurePathGuard;
+use App\Forge\Writer\ComposerCreateProjectRunner;
+use App\Forge\Writer\PlanExecutor;
+
+$console = new Console(appName: 'Astral Forge Console');
+
+/** @var array{
+ *     allowed_roots: list<string>,
+ *     starter_package: string,
+ *     composer_bin: string,
+ *     supported_recipes: list<string>,
+ *     supported_targets: list<string>
+ * } $forgeConfig
+ */
+$forgeConfig = require BASE_PATH . '/config/forge.php';
+$forgeService = new ProjectGenerationService(
+    new BlueprintValidator($forgeConfig['supported_recipes'], $forgeConfig['supported_targets']),
+    new DependencyResolver(),
+    new GenerationPlanner($forgeConfig['starter_package']),
+    new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH),
+    new PlanExecutor(new ComposerCreateProjectRunner($forgeConfig['composer_bin'])),
+);
+
+$console->register(new ForgePlanCommand($forgeService));
+$console->register(new ForgeGenerateCommand($forgeService));
+
+$console->register(new ClearCacheCommand(BASE_PATH . '/storage/cache'));
+
+$makeMigration = new MakeMigrationCommand(BASE_PATH . '/database/migrations');
+$console->register(new MakeModelCommand(BASE_PATH . '/app/Models'));
+$console->register(new MakeDaoCommand(BASE_PATH . '/app/Dao', BASE_PATH . '/app/Models'));
+$console->register(new MakeControllerCommand(BASE_PATH . '/app/Controllers', BASE_PATH . '/app/Dao'));
+$console->register($makeMigration);
+$console->register(new MakeModuleCommand(BASE_PATH, $makeMigration));
+
+try {
+    $dbConfig = require BASE_PATH . '/config/database.php';
+    $pdo      = Connection::getInstance($dbConfig);
+    $migrator = new Migrator($pdo, BASE_PATH . '/database/migrations');
+
+    $console->register(new MigrateCommand($migrator));
+    $console->register(new MigrateRollbackCommand($migrator));
+    $console->register(new MigrateStatusCommand($migrator));
+} catch (\Throwable $e) {
+    fwrite(STDERR, "\033[33m⚠ Commandes de migration indisponibles : " . $e->getMessage() . "\033[0m\n");
+}
+
+exit($console->run($_SERVER['argv'] ?? []));

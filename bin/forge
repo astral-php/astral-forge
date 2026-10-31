@@ -1,0 +1,188 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * CLI Forge autonome (évite Core\Console tant que readonly+$commands = [] est cassé en 2.1.0).
+ *
+ * Usage :
+ *   php bin/forge plan <blueprint.json> --dest=<chemin>
+ *   php bin/forge generate <blueprint.json> --dest=<chemin> [--dry-run|--confirm]
+ */
+
+define('BASE_PATH', dirname(__DIR__));
+
+require BASE_PATH . '/vendor/autoload.php';
+
+if (file_exists(BASE_PATH . '/.env')) {
+    Dotenv\Dotenv::createImmutable(BASE_PATH)->safeLoad();
+}
+
+use App\Forge\Blueprint\BlueprintValidator;
+use App\Forge\Exception\GenerationException;
+use App\Forge\Exception\InvalidBlueprintException;
+use App\Forge\Exception\UnsafePathException;
+use App\Forge\Plan\GenerationPlanner;
+use App\Forge\ProjectGenerationService;
+use App\Forge\Resolver\DependencyResolver;
+use App\Forge\Security\SecurePathGuard;
+use App\Forge\Writer\ComposerCreateProjectRunner;
+use App\Forge\Writer\PlanExecutor;
+
+/** @var array{
+ *     allowed_roots: list<string>,
+ *     starter_package: string,
+ *     composer_bin: string,
+ *     supported_recipes: list<string>,
+ *     supported_targets: list<string>
+ * } $forgeConfig
+ */
+$forgeConfig = require BASE_PATH . '/config/forge.php';
+
+$service = new ProjectGenerationService(
+    new BlueprintValidator($forgeConfig['supported_recipes'], $forgeConfig['supported_targets']),
+    new DependencyResolver(),
+    new GenerationPlanner($forgeConfig['starter_package']),
+    new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH),
+    new PlanExecutor(new ComposerCreateProjectRunner($forgeConfig['composer_bin'])),
+);
+
+$argv = $_SERVER['argv'] ?? [];
+$command = $argv[1] ?? null;
+$args = array_slice($argv, 2);
+
+if ($command === null || in_array($command, ['-h', '--help', 'help'], true)) {
+    fwrite(STDOUT, <<<TXT
+Astral Forge CLI 0.1.0
+
+  php bin/forge plan <blueprint.json> --dest=<chemin>
+  php bin/forge generate <blueprint.json> --dest=<chemin> [--dry-run|--confirm]
+
+TXT);
+    exit($command === null ? 1 : 0);
+}
+
+try {
+    exit(match ($command) {
+        'plan' => runPlan($service, $args),
+        'generate' => runGenerate($service, $args),
+        default => (static function () use ($command): int {
+            fwrite(STDERR, "Commande inconnue : {$command}\n");
+
+            return 1;
+        })(),
+    });
+} catch (InvalidBlueprintException | UnsafePathException | GenerationException | JsonException $e) {
+    fwrite(STDERR, 'Erreur : ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}
+
+/**
+ * @param list<string> $args
+ */
+function runPlan(ProjectGenerationService $service, array $args): int
+{
+    [$path, $dest] = parseBlueprintAndDest($args);
+    $plan = $service->plan(loadBlueprint($path), $dest);
+
+    fwrite(STDOUT, "Plan déterministe — aucune écriture.\n");
+    fwrite(STDOUT, 'Destination : ' . $plan->destination . PHP_EOL);
+    fwrite(STDOUT, 'Recette     : ' . $plan->blueprint->recipe . PHP_EOL);
+    fwrite(STDOUT, 'Projet      : ' . $plan->blueprint->projectName . PHP_EOL . PHP_EOL);
+
+    foreach ($plan->operations as $i => $op) {
+        $desc = $op->description !== '' ? $op->description : $op->path;
+        fwrite(STDOUT, sprintf("  %d. [%s] %s\n", $i + 1, $op->type, $desc));
+    }
+
+    return 0;
+}
+
+/**
+ * @param list<string> $args
+ */
+function runGenerate(ProjectGenerationService $service, array $args): int
+{
+    $confirm = in_array('--confirm', $args, true);
+    $dryRun = in_array('--dry-run', $args, true);
+    [$path, $dest] = parseBlueprintAndDest($args);
+
+    $report = $service->generate(
+        loadBlueprint($path),
+        $dest,
+        confirm: $confirm || $dryRun,
+        dryRun: $dryRun,
+    );
+
+    if (!$report->success) {
+        foreach ($report->errors as $error) {
+            fwrite(STDERR, 'Erreur : ' . $error . PHP_EOL);
+        }
+
+        return 1;
+    }
+
+    fwrite(STDOUT, ($dryRun ? "Dry-run OK — aucune écriture.\n" : 'Projet généré : ' . $report->destination . PHP_EOL));
+    foreach ($report->entries as $entry) {
+        fwrite(STDOUT, sprintf(
+            "  [%s] %s — %s\n",
+            $entry['status'],
+            $entry['operation'],
+            $entry['message']
+        ));
+    }
+
+    return 0;
+}
+
+/**
+ * @param list<string> $args
+ * @return array{0: string, 1: string}
+ */
+function parseBlueprintAndDest(array $args): array
+{
+    $path = null;
+    $dest = null;
+    foreach ($args as $arg) {
+        if (str_starts_with($arg, '--dest=')) {
+            $dest = substr($arg, 7);
+            continue;
+        }
+        if (str_starts_with($arg, '--')) {
+            continue;
+        }
+        if ($path === null) {
+            $path = $arg;
+        }
+    }
+
+    if ($path === null || $dest === null || $dest === '') {
+        throw new InvalidBlueprintException(
+            'Usage : plan|generate <blueprint.json> --dest=<chemin> [--dry-run|--confirm]'
+        );
+    }
+
+    return [$path, $dest];
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function loadBlueprint(string $path): array
+{
+    if (!is_file($path)) {
+        throw new InvalidBlueprintException('Fichier blueprint introuvable : ' . $path);
+    }
+    $raw = file_get_contents($path);
+    if ($raw === false) {
+        throw new InvalidBlueprintException('Lecture blueprint impossible.');
+    }
+    $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+    if (!is_array($data)) {
+        throw new InvalidBlueprintException('Le blueprint doit être un objet JSON.');
+    }
+
+    /** @var array<string, mixed> $data */
+    return $data;
+}
