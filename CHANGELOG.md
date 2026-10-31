@@ -1,5 +1,20 @@
 # Changelog — astral-forge
 
+## 0.2.0 — 2026-10-31
+
+### Ajouté
+
+- Recettes **blog-lite** (module Article CRUD + liste publique) et **api-json** (`/api/v1/health` + Cors)
+- Feature `crud_resource` + `modules[]` (PascalCase)
+- Générateurs `CrudModuleWriter` / `ApiBootstrapWriter` (routes `forge_routes.php`, provider généré)
+- Exemples blueprint `resources/blueprints/blog-lite.example.json` · `api-json.example.json`
+- UI `/forge` : choix de recette
+
+### Notes
+
+- Packages Composer optionnels : `astral-php/astral-form:^0.2` (déclarable, install manuelle)
+- Préversion `@dev` jusqu’à 1.0.0
+
 ## 0.1.0 — 2026-10-31
 
 ### Ajouté

@@ -11,6 +11,8 @@ final class PlanOperation
 {
     public const TYPE_ENSURE_EMPTY_DIR = 'ensure_empty_dir';
     public const TYPE_COMPOSER_CREATE_PROJECT = 'composer_create_project';
+    public const TYPE_WRITE_CRUD_MODULE = 'write_crud_module';
+    public const TYPE_WRITE_API_BOOTSTRAP = 'write_api_bootstrap';
     public const TYPE_NOTE = 'note';
 
     /**

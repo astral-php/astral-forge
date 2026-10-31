@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "mon-blog-lite",
+    "target": "astral-starter-2.1"
+  },
+  "recipe": "blog-lite",
+  "features": {
+    "authentication": true,
+    "admin_users": true,
+    "api": false,
+    "crud_resource": true
+  },
+  "modules": ["Article"],
+  "views": {
+    "engine": "php"
+  },
+  "packages": []
+}

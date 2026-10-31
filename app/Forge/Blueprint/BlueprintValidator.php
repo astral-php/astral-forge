@@ -11,18 +11,20 @@ use App\Forge\Exception\InvalidBlueprintException;
  */
 final class BlueprintValidator
 {
-    private const ALLOWED_TOP = ['schemaVersion', 'project', 'recipe', 'features', 'views', 'packages'];
+    private const ALLOWED_TOP = ['schemaVersion', 'project', 'recipe', 'features', 'modules', 'views', 'packages'];
     private const ALLOWED_PROJECT = ['name', 'target'];
-    private const ALLOWED_FEATURES = ['authentication', 'admin_users', 'api'];
+    private const ALLOWED_FEATURES = ['authentication', 'admin_users', 'api', 'crud_resource'];
     private const ALLOWED_VIEWS = ['engine'];
+    private const ALLOWED_PACKAGES = [
+        'astral-php/astral-form:^0.2',
+    ];
 
     /**
-     * @param array<string, mixed> $data
      * @param list<string> $supportedRecipes
      * @param list<string> $supportedTargets
      */
     public function __construct(
-        private readonly array $supportedRecipes = ['blank'],
+        private readonly array $supportedRecipes = ['blank', 'blog-lite', 'api-json'],
         private readonly array $supportedTargets = ['astral-starter-2.1'],
     ) {
     }
@@ -75,14 +77,23 @@ final class BlueprintValidator
         $features = [
             'authentication' => $this->boolFlag($featuresRaw, 'authentication', true),
             'admin_users' => $this->boolFlag($featuresRaw, 'admin_users', true),
-            'api' => $this->boolFlag($featuresRaw, 'api', false),
+            'api' => $this->boolFlag($featuresRaw, 'api', $recipe === 'api-json'),
+            'crud_resource' => $this->boolFlag($featuresRaw, 'crud_resource', $recipe === 'blog-lite'),
         ];
 
         if ($recipe === 'blank' && $features['api'] === true) {
             throw new InvalidBlueprintException(
-                'La recette blank (0.1) ne supporte pas features.api (prévu 0.2).'
+                'features.api=true nécessite la recette api-json (pas blank).'
             );
         }
+        if ($recipe === 'api-json' && $features['api'] !== true) {
+            throw new InvalidBlueprintException('La recette api-json exige features.api=true.');
+        }
+        if ($recipe === 'blog-lite' && $features['crud_resource'] !== true) {
+            throw new InvalidBlueprintException('La recette blog-lite exige features.crud_resource=true.');
+        }
+
+        $modules = $this->normalizeModules($data['modules'] ?? null, $recipe, $features['crud_resource']);
 
         $views = $data['views'] ?? ['engine' => 'php'];
         if (!is_array($views)) {
@@ -91,7 +102,7 @@ final class BlueprintValidator
         $this->assertOnlyKeys($views, self::ALLOWED_VIEWS, 'views');
         $engine = $views['engine'] ?? 'php';
         if ($engine !== 'php') {
-            throw new InvalidBlueprintException('views.engine doit être "php" en 0.1 (twide différé).');
+            throw new InvalidBlueprintException('views.engine doit être "php" (twide différé).');
         }
 
         $packages = $data['packages'] ?? [];
@@ -102,15 +113,17 @@ final class BlueprintValidator
             if (!is_string($pkg) || $pkg === '') {
                 throw new InvalidBlueprintException('Chaque package doit être une chaîne non vide.');
             }
-            if (str_contains($pkg, 'astral-core:^1') || preg_match('/astral-core.*\^1\b/', $pkg) === 1) {
+            if (preg_match('/astral-core[^\\s]*\\^?1\\b/', $pkg) === 1) {
                 throw new InvalidBlueprintException('astral-core ^1 refusé — cible 2.1 uniquement.');
+            }
+            if (!in_array($pkg, self::ALLOWED_PACKAGES, true)) {
+                throw new InvalidBlueprintException(
+                    'Package non autorisé en 0.2 : ' . $pkg . ' (autorisés : '
+                    . implode(', ', self::ALLOWED_PACKAGES) . ').'
+                );
             }
         }
         /** @var list<string> $packages */
-
-        if ($packages !== []) {
-            throw new InvalidBlueprintException('packages non vides non supportés en 0.1 (recette blank seule).');
-        }
 
         return new Blueprint(
             schemaVersion: 1,
@@ -120,7 +133,51 @@ final class BlueprintValidator
             features: $features,
             viewsEngine: 'php',
             packages: $packages,
+            modules: $modules,
         );
+    }
+
+    /**
+     * @param mixed $raw
+     * @return list<string>
+     */
+    private function normalizeModules(mixed $raw, string $recipe, bool $crud): array
+    {
+        if ($raw === null) {
+            if ($recipe === 'blog-lite' || $crud) {
+                return ['Article'];
+            }
+
+            return [];
+        }
+        if (!is_array($raw)) {
+            throw new InvalidBlueprintException('modules doit être un tableau de noms PascalCase.');
+        }
+
+        $modules = [];
+        foreach ($raw as $item) {
+            if (is_array($item)) {
+                $item = $item['name'] ?? null;
+            }
+            if (!is_string($item) || !preg_match('/^[A-Z][a-zA-Z0-9]*$/', $item)) {
+                throw new InvalidBlueprintException(
+                    'Chaque module doit être un nom PascalCase (ex. Article).'
+                );
+            }
+            $modules[] = $item;
+        }
+
+        if (($recipe === 'blog-lite' || $crud) && $modules === []) {
+            $modules = ['Article'];
+        }
+
+        if ($modules !== [] && !$crud && $recipe !== 'blog-lite') {
+            throw new InvalidBlueprintException(
+                'modules non vides exige features.crud_resource=true ou recipe blog-lite.'
+            );
+        }
+
+        return array_values(array_unique($modules));
     }
 
     /**

@@ -1,10 +1,11 @@
 # Astral Forge
 
-Générateur de projets **Astral MVC 2.1** — préversion **0.1.0** (`@dev` jusqu’à 1.0.0).
+Générateur de projets **Astral MVC 2.1** — préversion **0.2.0** (`@dev` jusqu’à 1.0.0).
 
 - Blueprint JSON (schema v1)
-- Plan déterministe sans I/O (`forge:plan`)
-- Génération greenfield blank via `composer create-project astral-php/astral-starter:^2.1`
+- Plan déterministe sans I/O (`php bin/forge plan`)
+- Recettes : **blank** · **blog-lite** (Article CRUD) · **api-json** (`/api/v1` + Cors)
+- Génération greenfield via `astral-starter:^2.1` + modules
 - UI PHP minimale (nova-red) · UI Vite Vue|React prévue en 0.3.0
 
 ## Prérequis

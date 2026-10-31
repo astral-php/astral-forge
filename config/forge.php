@@ -29,6 +29,8 @@ return [
 
     'supported_recipes' => [
         'blank',
+        'blog-lite',
+        'api-json',
     ],
 
     'supported_targets' => [

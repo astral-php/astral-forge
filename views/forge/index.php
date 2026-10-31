@@ -5,14 +5,13 @@
 ?>
 <section style="padding: 1.5rem 0 1rem">
     <p style="font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:0 0 0.75rem">
-        Préversion 0.1 · recette blank
+        Préversion 0.2 · blank · blog-lite · api-json
     </p>
     <h1 style="font-family:Fraunces,Georgia,serif;font-size:clamp(1.75rem,4vw,2.25rem);margin:0 0 0.75rem">
         Nouveau projet Astral
     </h1>
     <p style="color:var(--muted);max-width:36rem;line-height:1.55;margin:0 0 1.5rem">
-        Blueprint → plan (dry-run) → génération via <code>astral-starter:^2.1</code>.
-        Destination hors racines autorisées refusée.
+        Blueprint → plan → génération greenfield (<code>astral-starter:^2.1</code> + modules).
     </p>
 
     <form method="POST" action="/forge/plan" class="auth-card" style="max-width:36rem;margin-bottom:1.5rem">
@@ -32,6 +31,8 @@
             <label for="recipe">Recette</label>
             <select class="input" id="recipe" name="recipe">
                 <option value="blank" <?= $form['recipe'] === 'blank' ? 'selected' : '' ?>>blank (starter)</option>
+                <option value="blog-lite" <?= $form['recipe'] === 'blog-lite' ? 'selected' : '' ?>>blog-lite (+ Article CRUD)</option>
+                <option value="api-json" <?= $form['recipe'] === 'api-json' ? 'selected' : '' ?>>api-json (/api/v1 + Cors)</option>
             </select>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:1.25rem">

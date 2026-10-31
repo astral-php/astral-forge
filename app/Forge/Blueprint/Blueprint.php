@@ -10,8 +10,14 @@ namespace App\Forge\Blueprint;
 final class Blueprint
 {
     /**
-     * @param array{authentication?: bool, admin_users?: bool, api?: bool} $features
+     * @param array{
+     *     authentication?: bool,
+     *     admin_users?: bool,
+     *     api?: bool,
+     *     crud_resource?: bool
+     * } $features
      * @param list<string> $packages
+     * @param list<string> $modules Noms d’entités PascalCase (ex. Article)
      */
     public function __construct(
         public readonly int $schemaVersion,
@@ -21,6 +27,7 @@ final class Blueprint
         public readonly array $features,
         public readonly string $viewsEngine,
         public readonly array $packages,
+        public readonly array $modules = [],
     ) {
     }
 
@@ -37,6 +44,7 @@ final class Blueprint
             ],
             'recipe' => $this->recipe,
             'features' => $this->features,
+            'modules' => $this->modules,
             'views' => [
                 'engine' => $this->viewsEngine,
             ],

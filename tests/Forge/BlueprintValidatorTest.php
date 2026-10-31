@@ -24,7 +24,31 @@ final class BlueprintValidatorTest extends TestCase
         self::assertSame(1, $bp->schemaVersion);
         self::assertSame('mon-application', $bp->projectName);
         self::assertSame('blank', $bp->recipe);
-        self::assertSame('php', $bp->viewsEngine);
+        self::assertSame([], $bp->modules);
+    }
+
+    public function testBlogLiteImpliesArticleModule(): void
+    {
+        $data = $this->validData();
+        $data['recipe'] = 'blog-lite';
+        $data['features']['crud_resource'] = true;
+        unset($data['modules']);
+
+        $bp = $this->validator->validate($data);
+
+        self::assertSame(['Article'], $bp->modules);
+        self::assertTrue($bp->features['crud_resource']);
+    }
+
+    public function testApiJsonRequiresApiFlag(): void
+    {
+        $data = $this->validData();
+        $data['recipe'] = 'api-json';
+        $data['features']['api'] = true;
+
+        $bp = $this->validator->validate($data);
+
+        self::assertTrue($bp->features['api']);
     }
 
     public function testRejectsUnknownKey(): void
@@ -75,6 +99,7 @@ final class BlueprintValidatorTest extends TestCase
                 'authentication' => true,
                 'admin_users' => true,
                 'api' => false,
+                'crud_resource' => false,
             ],
             'views' => ['engine' => 'php'],
             'packages' => [],

@@ -16,7 +16,7 @@ use Core\Session;
 use Core\View;
 
 /**
- * UI PHP minimale 0.1 — plan / génération blank (Vite UI = 0.3).
+ * UI PHP minimale 0.2 — blank / blog-lite / api-json (Vite UI = 0.3).
  */
 final class ForgeController extends AbstractController
 {
@@ -138,18 +138,22 @@ final class ForgeController extends AbstractController
      */
     private function blueprintFromForm(array $form): array
     {
+        $recipe = $form['recipe'];
+
         return [
             'schemaVersion' => 1,
             'project' => [
                 'name' => $form['project_name'],
                 'target' => 'astral-starter-2.1',
             ],
-            'recipe' => $form['recipe'],
+            'recipe' => $recipe,
             'features' => [
                 'authentication' => true,
                 'admin_users' => true,
-                'api' => false,
+                'api' => $recipe === 'api-json',
+                'crud_resource' => $recipe === 'blog-lite',
             ],
+            'modules' => $recipe === 'blog-lite' ? ['Article'] : [],
             'views' => [
                 'engine' => 'php',
             ],

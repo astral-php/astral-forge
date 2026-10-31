@@ -6,6 +6,8 @@ namespace App\Forge\Writer;
 
 use App\Forge\Exception\CollisionException;
 use App\Forge\Exception\GenerationException;
+use App\Forge\Generator\ApiBootstrapWriter;
+use App\Forge\Generator\CrudModuleWriter;
 use App\Forge\Plan\GenerationPlan;
 use App\Forge\Plan\PlanOperation;
 use App\Forge\Report\GenerationReport;
@@ -17,6 +19,8 @@ final class PlanExecutor
 {
     public function __construct(
         private readonly ComposerCreateProjectRunner $composerRunner,
+        private readonly CrudModuleWriter $crudWriter = new CrudModuleWriter(),
+        private readonly ApiBootstrapWriter $apiWriter = new ApiBootstrapWriter(),
     ) {
     }
 
@@ -27,7 +31,7 @@ final class PlanExecutor
 
         try {
             foreach ($plan->operations as $operation) {
-                $entries[] = $this->runOperation($operation, $dryRun, $plan);
+                $entries[] = $this->runOperation($operation, $dryRun);
             }
         } catch (CollisionException | GenerationException $e) {
             $errors[] = $e->getMessage();
@@ -53,11 +57,13 @@ final class PlanExecutor
     /**
      * @return array{operation: string, path: string, status: string, message: string}
      */
-    private function runOperation(PlanOperation $operation, bool $dryRun, GenerationPlan $plan): array
+    private function runOperation(PlanOperation $operation, bool $dryRun): array
     {
         return match ($operation->type) {
             PlanOperation::TYPE_ENSURE_EMPTY_DIR => $this->ensureEmptyDir($operation, $dryRun),
             PlanOperation::TYPE_COMPOSER_CREATE_PROJECT => $this->createProject($operation, $dryRun),
+            PlanOperation::TYPE_WRITE_CRUD_MODULE => $this->writeCrud($operation, $dryRun),
+            PlanOperation::TYPE_WRITE_API_BOOTSTRAP => $this->writeApi($operation, $dryRun),
             PlanOperation::TYPE_NOTE => [
                 'operation' => $operation->type,
                 'path' => $operation->path,
@@ -82,7 +88,7 @@ final class PlanExecutor
             ));
             if ($items !== []) {
                 throw new CollisionException(
-                    'Destination non vide : ' . $path . ' — greenfield uniquement (0.1).'
+                    'Destination non vide : ' . $path . ' — greenfield uniquement.'
                 );
             }
         } elseif (file_exists($path)) {
@@ -137,6 +143,66 @@ final class PlanExecutor
             'path' => $operation->path,
             'status' => 'ok',
             'message' => 'Projet créé via Composer.',
+        ];
+    }
+
+    /**
+     * @return array{operation: string, path: string, status: string, message: string}
+     */
+    private function writeCrud(PlanOperation $operation, bool $dryRun): array
+    {
+        $entity = (string) ($operation->meta['entity'] ?? '');
+        if ($entity === '') {
+            throw new GenerationException('Métadonnée entity manquante pour write_crud_module.');
+        }
+
+        if ($dryRun) {
+            return [
+                'operation' => $operation->type,
+                'path' => $operation->path,
+                'status' => 'planned',
+                'message' => $operation->description,
+            ];
+        }
+
+        $files = $this->crudWriter->write(
+            $operation->path,
+            $entity,
+            (bool) ($operation->meta['public_list'] ?? false),
+        );
+
+        return [
+            'operation' => $operation->type,
+            'path' => $operation->path,
+            'status' => 'ok',
+            'message' => 'Module ' . $entity . ' : ' . count($files) . ' fichiers.',
+        ];
+    }
+
+    /**
+     * @return array{operation: string, path: string, status: string, message: string}
+     */
+    private function writeApi(PlanOperation $operation, bool $dryRun): array
+    {
+        if ($dryRun) {
+            return [
+                'operation' => $operation->type,
+                'path' => $operation->path,
+                'status' => 'planned',
+                'message' => $operation->description,
+            ];
+        }
+
+        $files = $this->apiWriter->write(
+            $operation->path,
+            (string) ($operation->meta['prefix'] ?? '/api/v1'),
+        );
+
+        return [
+            'operation' => $operation->type,
+            'path' => $operation->path,
+            'status' => 'ok',
+            'message' => 'API bootstrap : ' . count($files) . ' fichier(s).',
         ];
     }
 

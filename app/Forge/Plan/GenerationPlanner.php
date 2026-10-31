@@ -19,8 +19,11 @@ final class GenerationPlanner
 
     public function plan(Blueprint $blueprint, string $absoluteDestination): GenerationPlan
     {
-        if ($blueprint->recipe !== 'blank') {
-            throw new InvalidBlueprintException('Seule la recette blank est planifiable en 0.1.');
+        $allowed = ['blank', 'blog-lite', 'api-json'];
+        if (!in_array($blueprint->recipe, $allowed, true)) {
+            throw new InvalidBlueprintException(
+                'Recette non planifiable : ' . $blueprint->recipe
+            );
         }
 
         $dest = $this->normalizePath($absoluteDestination);
@@ -45,16 +48,57 @@ final class GenerationPlanner
                     $blueprint->projectName
                 ),
             ),
-            new PlanOperation(
-                type: PlanOperation::TYPE_NOTE,
+        ];
+
+        foreach ($blueprint->modules as $module) {
+            $operations[] = new PlanOperation(
+                type: PlanOperation::TYPE_WRITE_CRUD_MODULE,
                 path: $dest,
                 meta: [
-                    'authentication' => $blueprint->features['authentication'] ?? true,
-                    'admin_users' => $blueprint->features['admin_users'] ?? true,
+                    'entity' => $module,
+                    'public_list' => $blueprint->recipe === 'blog-lite',
                 ],
-                description: 'Recette blank : auth + admin users inclus via astral-starter.',
-            ),
-        ];
+                description: sprintf(
+                    'Module CRUD PHP : %s (Model, Dao, Controller, migration, vues, routes)',
+                    $module
+                ),
+            );
+        }
+
+        if ($blueprint->features['api'] ?? false) {
+            $operations[] = new PlanOperation(
+                type: PlanOperation::TYPE_WRITE_API_BOOTSTRAP,
+                path: $dest,
+                meta: [
+                    'prefix' => '/api/v1',
+                ],
+                description: 'Bootstrap API JSON : HealthController + routes /api/v1 + Cors.',
+            );
+        }
+
+        $operations[] = new PlanOperation(
+            type: PlanOperation::TYPE_NOTE,
+            path: $dest,
+            meta: [
+                'recipe' => $blueprint->recipe,
+                'packages' => $blueprint->packages,
+            ],
+            description: match ($blueprint->recipe) {
+                'blog-lite' => 'Recette blog-lite : starter + module Article (liste publique).',
+                'api-json' => 'Recette api-json : starter + API v1 (Cors).',
+                default => 'Recette blank : auth + admin users inclus via astral-starter.',
+            },
+        );
+
+        if ($blueprint->packages !== []) {
+            $operations[] = new PlanOperation(
+                type: PlanOperation::TYPE_NOTE,
+                path: $dest,
+                meta: ['packages' => $blueprint->packages],
+                description: 'Packages déclarés (à installer manuellement si besoin) : '
+                    . implode(', ', $blueprint->packages),
+            );
+        }
 
         return new GenerationPlan($blueprint, $dest, $operations);
     }
