@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Controllers\Admin\UserController as AdminUserController;
 use App\Controllers\AuthController;
+use App\Controllers\ForgeApiController;
 use App\Controllers\ForgeController;
 use App\Controllers\HomeController;
 use App\Controllers\ProfileController;
@@ -107,7 +108,7 @@ final class AppServiceProvider implements ServiceProviderInterface
         $container->bind(HomeController::class, fn(Container $c) => new HomeController(
             view:        $c->make(View::class),
             userDao:     $c->make(UserDao::class),
-            version:     (string) ($appConfig['version'] ?? '0.2.0'),
+            version:     (string) ($appConfig['version'] ?? '0.3.0'),
             githubUrl:   (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
             websiteUrl:  (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
         ));
@@ -116,6 +117,12 @@ final class AppServiceProvider implements ServiceProviderInterface
             view:    $c->make(View::class),
             request: $c->make(Request::class),
             session: $c->make(Session::class),
+            forge:   $c->make(ProjectGenerationService::class),
+        ));
+
+        $container->bind(ForgeApiController::class, fn(Container $c) => new ForgeApiController(
+            view:    $c->make(View::class),
+            request: $c->make(Request::class),
             forge:   $c->make(ProjectGenerationService::class),
         ));
 

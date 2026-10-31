@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #1f1412;
+  --muted: #6b5652;
+  --paper: #faf6f5;
+  --panel: #ffffff;
+  --line: #e8d9d6;
+  --accent: #b42318;
+  --accent-soft: #fdeceb;
+}
+
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #f3d9d5 0%, transparent 55%),
+    radial-gradient(900px 400px at 100% 0%, #f0e6e3 0%, transparent 50%),
+    var(--paper);
+}
+
+.forge-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.forge-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.forge-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.forge-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+}
+.forge-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--line);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  background: #fff;
+}
+.forge-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.forge-card {
+  border-radius: 1rem;
+  border: 1px solid var(--line);
+  padding: 1.25rem;
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}

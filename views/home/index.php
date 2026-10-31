@@ -1,6 +1,6 @@
 <section style="padding: 2.5rem 0 1rem">
     <p style="font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:0 0 0.75rem">
-        Générateur Astral · préversion v<?= htmlspecialchars((string) $version, ENT_QUOTES, 'UTF-8') ?>
+        Générateur Astral · Vue + Vite · préversion v<?= htmlspecialchars((string) $version, ENT_QUOTES, 'UTF-8') ?>
     </p>
     <h1 style="font-family:Fraunces,Georgia,serif;font-size:clamp(2rem,5vw,2.75rem);line-height:1.15;margin:0 0 1rem">
         Astral Forge

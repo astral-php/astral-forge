@@ -16,7 +16,7 @@ use Core\Session;
 use Core\View;
 
 /**
- * UI PHP minimale 0.2 — blank / blog-lite / api-json (Vite UI = 0.3).
+ * Shell PHP /forge — island Vue (0.3) ; POST plan/generate conservés en fallback.
  */
 final class ForgeController extends AbstractController
 {
@@ -33,9 +33,6 @@ final class ForgeController extends AbstractController
     {
         return $this->render('forge/index', [
             'title' => 'Forge — nouveau projet',
-            'form' => $this->defaultForm(),
-            'plan' => null,
-            'report' => null,
         ]);
     }
 

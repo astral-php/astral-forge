@@ -1,5 +1,19 @@
 # Changelog — astral-forge
 
+## 0.3.0 — 2026-10-31
+
+### Ajouté
+
+- UI **Vue 3** + **astral-vite ^1.2** sur `/forge` (wizard config → plan → confirm)
+- API JSON `POST /forge/api/plan` · `POST /forge/api/generate` (CSRF `X-CSRF-Token`)
+- ADR-003 figé : stack Forge = **Vue** (pas React)
+- Build prod : `npm run build` (+ copie `manifest.json` pour Vite 5)
+
+### Notes
+
+- Dev front : `npm run dev` (port 5173) + `APP_ENV=development`
+- Assets buildés commités sous `public/build/` pour create-project sans npm
+
 ## 0.2.0 — 2026-10-31
 
 ### Ajouté

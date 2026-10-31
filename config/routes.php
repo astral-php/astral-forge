@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\Admin\UserController as AdminUserController;
 use App\Controllers\AuthController;
+use App\Controllers\ForgeApiController;
 use App\Controllers\ForgeController;
 use App\Controllers\HomeController;
 use App\Controllers\ProfileController;
@@ -20,6 +21,8 @@ return function (Router $router): void {
     $router->get('/forge', ForgeController::class, 'index');
     $router->post('/forge/plan', ForgeController::class, 'plan');
     $router->post('/forge/generate', ForgeController::class, 'generate');
+    $router->post('/forge/api/plan', ForgeApiController::class, 'plan');
+    $router->post('/forge/api/generate', ForgeApiController::class, 'generate');
 
     $router->get('/login',     AuthController::class, 'loginForm')->middleware(GuestMiddleware::class);
     $router->post('/login',    AuthController::class, 'login')->middleware(GuestMiddleware::class);

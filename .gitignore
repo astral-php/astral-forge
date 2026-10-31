@@ -1,4 +1,5 @@
 /vendor/
+/node_modules/
 /database/*.sqlite
 /.env
 /storage/logs/*
@@ -7,4 +8,5 @@
 !/storage/cache/.gitkeep
 /.phpunit.result.cache
 composer.lock
+package-lock.json
 .vscode/

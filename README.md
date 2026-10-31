@@ -1,12 +1,12 @@
 # Astral Forge
 
-Générateur de projets **Astral MVC 2.1** — préversion **0.2.0** (`@dev` jusqu’à 1.0.0).
+Générateur de projets **Astral MVC 2.1** — préversion **0.3.0** (`@dev` jusqu’à 1.0.0).
 
 - Blueprint JSON (schema v1)
 - Plan déterministe sans I/O (`php bin/forge plan`)
-- Recettes : **blank** · **blog-lite** (Article CRUD) · **api-json** (`/api/v1` + Cors)
+- Recettes : **blank** · **blog-lite** · **api-json**
 - Génération greenfield via `astral-starter:^2.1` + modules
-- UI PHP minimale (nova-red) · UI Vite Vue|React prévue en 0.3.0
+- UI **Vue 3** + **astral-vite** (nova-red) — wizard `/forge`
 
 ## Prérequis
 
@@ -41,6 +41,14 @@ La destination doit être sous `FORGE_ALLOWED_ROOT` (défaut : parent du dépôt
 ```bash
 composer serve
 # http://127.0.0.1:8090/forge
+```
+
+### Front (dev)
+
+```bash
+npm install
+npm run dev          # Vite :5173 — APP_ENV=development
+npm run build        # public/build + manifest.json
 ```
 
 ## Tests

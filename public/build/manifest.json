@@ -1,0 +1,16 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/style-CA-2HFp1.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-B99rozeE.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "css": [
+      "assets/style-CA-2HFp1.css"
+    ]
+  }
+}

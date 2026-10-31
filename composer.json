@@ -2,7 +2,7 @@
   "name": "astral-php/astral-forge",
   "description": "Astral Forge — générateur de projets Astral MVC 2.1 (blueprint, plan, génération)",
   "type": "project",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "keywords": [
     "astral",
@@ -10,12 +10,15 @@
     "mvc",
     "forge",
     "generator",
-    "scaffold"
+    "scaffold",
+    "vue",
+    "vite"
   ],
   "homepage": "https://github.com/astral-php/astral-forge",
   "require": {
     "php": "^8.3",
-    "astral-php/astral-core": "^2.1"
+    "astral-php/astral-core": "^2.1",
+    "astral-php/astral-vite": "^1.2"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.6 || ^10.5 || ^11.0"
@@ -36,7 +39,8 @@
   },
   "scripts": {
     "serve": "php -S 127.0.0.1:8090 -t public public/router.php",
-    "test": "phpunit --configuration phpunit.xml"
+    "test": "phpunit --configuration phpunit.xml",
+    "assets": "npm run build"
   },
   "minimum-stability": "stable",
   "prefer-stable": true
