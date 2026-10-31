@@ -181,10 +181,10 @@
         <header>
             <a class="brand" href="/">Astral Forge</a>
             <nav>
-                <a href="/forge">Forge</a>
+                <?php /* Mode local mono-user : auth masquée ; CTA = Forge */ ?>
+                <a class="btn btn-primary" href="/forge">Forge</a>
                 <?php if ($auth->check()): ?>
                     <span style="color:var(--muted)"><?= htmlspecialchars($auth->name(), ENT_QUOTES, 'UTF-8') ?></span>
-                    <a href="/profile">Profil</a>
                     <?php if ($auth->is(\Core\Auth\Role::Admin)): ?>
                         <a href="/admin/users">Admin</a>
                     <?php endif ?>
@@ -192,9 +192,6 @@
                         <?= $csrf->field() ?>
                         <button type="submit" class="btn btn-ghost" style="cursor:pointer;font:inherit">Déconnexion</button>
                     </form>
-                <?php else: ?>
-                    <a href="/login">Connexion</a>
-                    <a class="btn btn-primary" href="/register">Inscription</a>
                 <?php endif ?>
             </nav>
         </header>

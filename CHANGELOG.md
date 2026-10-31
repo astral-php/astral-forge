@@ -1,5 +1,12 @@
 # Changelog — astral-forge
 
+## 0.3.1 — 2026-10-31
+
+### Modifié
+
+- UX locale mono-user : **Connexion / Inscription** masquées ; CTA **Forge** / « Créer un projet »
+- Auth starter conservée (routes directes) mais hors parcours principal
+
 ## 0.3.0 — 2026-10-31
 
 ### Ajouté
