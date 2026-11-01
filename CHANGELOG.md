@@ -1,5 +1,25 @@
 # Changelog — astral-forge
 
+## 0.4.0 — 2026-11-01
+
+### Ajouté
+
+- Refonte visuelle **nova-red** (home hero, topbar, cards, wizard).
+- Pages contenu : `/templates` · `/docs` · `/discover` · `/extensions` · `/news`.
+- Contenu d’usage aligné sur le tutoriel infos (UI + CLI + limites).
+
+### Modifié
+
+- Nav : Accueil · Projets · Templates · Documentation · Extensions.
+- Terminal home : commandes réelles `plan` / `generate` (plus de faux `create`).
+- Pages contenu centrées (`.content-page`).
+
+### Notes
+
+- Préversion **`@dev`** jusqu’à **1.0.0**.
+- Moteur blueprint / plan / generate **inchangé**.
+- Parcours de création (plan → generate) : **à valider** en QA avant 1.0.
+
 ## 0.3.1 — 2026-10-31
 
 ### Modifié

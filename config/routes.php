@@ -8,6 +8,7 @@ use App\Controllers\ForgeApiController;
 use App\Controllers\ForgeController;
 use App\Controllers\HomeController;
 use App\Controllers\ProfileController;
+use App\Controllers\SiteController;
 use App\Controllers\UserController;
 use Core\Auth\Middleware\AdminMiddleware;
 use Core\Auth\Middleware\AuthMiddleware;
@@ -17,6 +18,12 @@ use Core\Router;
 return function (Router $router): void {
 
     $router->get('/', HomeController::class, 'index');
+
+    $router->get('/templates', SiteController::class, 'templates');
+    $router->get('/docs', SiteController::class, 'docs');
+    $router->get('/discover', SiteController::class, 'discover');
+    $router->get('/extensions', SiteController::class, 'extensions');
+    $router->get('/news', SiteController::class, 'news');
 
     $router->get('/forge', ForgeController::class, 'index');
     $router->post('/forge/plan', ForgeController::class, 'plan');

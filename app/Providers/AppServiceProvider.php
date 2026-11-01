@@ -9,6 +9,7 @@ use App\Controllers\AuthController;
 use App\Controllers\ForgeApiController;
 use App\Controllers\ForgeController;
 use App\Controllers\HomeController;
+use App\Controllers\SiteController;
 use App\Controllers\ProfileController;
 use App\Controllers\UserController;
 use App\Dao\UserDao;
@@ -108,9 +109,16 @@ final class AppServiceProvider implements ServiceProviderInterface
         $container->bind(HomeController::class, fn(Container $c) => new HomeController(
             view:        $c->make(View::class),
             userDao:     $c->make(UserDao::class),
-            version:     (string) ($appConfig['version'] ?? '0.3.1'),
+            version:     (string) ($appConfig['version'] ?? '0.4.0'),
             githubUrl:   (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
             websiteUrl:  (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
+        ));
+
+        $container->bind(SiteController::class, fn(Container $c) => new SiteController(
+            view:       $c->make(View::class),
+            version:    (string) ($appConfig['version'] ?? '0.4.0'),
+            githubUrl:  (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
+            websiteUrl: (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
         ));
 
         $container->bind(ForgeController::class, fn(Container $c) => new ForgeController(

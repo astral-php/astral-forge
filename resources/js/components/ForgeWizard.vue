@@ -91,34 +91,28 @@ function backToConfig() {
 </script>
 
 <template>
-  <div class="max-w-xl space-y-5">
-    <header>
-      <p class="text-xs uppercase tracking-widest mb-2" style="color: var(--muted)">
-        Préversion 0.3 · Vue + Vite
-      </p>
-      <h1 class="font-serif text-3xl font-bold m-0 mb-2" style="font-family: Fraunces, Georgia, serif">
-        Nouveau projet Astral
-      </h1>
-      <p class="text-sm leading-relaxed m-0" style="color: var(--muted)">
-        Config → plan (dry-run) → confirmation → génération greenfield.
-      </p>
-    </header>
+  <div class="space-y-5">
+    <section class="forge-page-intro">
+      <p class="eyebrow"><span class="eyebrow-mark"></span> ASTRAL FORGE · ASSISTANT DE GÉNÉRATION · 0.4</p>
+      <h1>Nouveau projet</h1>
+      <p>Configurez votre application, vérifiez le plan, puis lancez une génération greenfield.</p>
+    </section>
 
-    <div v-if="error" class="rounded-xl border px-4 py-3 text-sm" style="background: var(--accent-soft); border-color: #f0c2be; color: #8a1f1a">
+    <div v-if="error" class="rounded-xl border px-4 py-3 text-sm" style="background: var(--accent-soft); border-color: #f0c2be; color: #8a1f1a" role="alert">
       {{ error }}
     </div>
 
-    <section v-show="step === 'config'" class="forge-card space-y-4">
+    <section v-show="step === 'config'" class="forge-card space-y-5">
       <div>
-        <label class="block text-sm font-medium mb-1" for="project_name">Nom (kebab-case)</label>
+        <label class="block text-sm font-semibold mb-1" for="project_name">Nom (kebab-case)</label>
         <input id="project_name" v-model="form.project_name" class="forge-input" required />
       </div>
       <div>
-        <label class="block text-sm font-medium mb-1" for="destination">Destination</label>
+        <label class="block text-sm font-semibold mb-1" for="destination">Destination</label>
         <input id="destination" v-model="form.destination" class="forge-input" placeholder="../demo-forge-app" required />
       </div>
       <div>
-        <label class="block text-sm font-medium mb-1" for="recipe">Recette</label>
+        <label class="block text-sm font-semibold mb-1" for="recipe">Recette</label>
         <select id="recipe" v-model="form.recipe" class="forge-input">
           <option v-for="r in recipes" :key="r.id" :value="r.id">{{ r.label }}</option>
         </select>
@@ -129,7 +123,7 @@ function backToConfig() {
     </section>
 
     <section v-show="step === 'plan'" class="forge-card space-y-4">
-      <h2 class="font-serif text-xl font-bold m-0" style="font-family: Fraunces, Georgia, serif">Plan</h2>
+      <h2 class="m-0" style="font-size:20px;font-weight:800">Plan</h2>
       <p v-if="plan" class="text-sm m-0" style="color: var(--muted)">→ {{ plan.destination }}</p>
       <ol v-if="plan" class="m-0 pl-5 text-sm leading-relaxed space-y-1">
         <li v-for="(op, i) in plan.operations" :key="i">
@@ -150,7 +144,7 @@ function backToConfig() {
     </section>
 
     <section v-show="step === 'result'" class="forge-card space-y-4">
-      <h2 class="font-serif text-xl font-bold m-0" style="font-family: Fraunces, Georgia, serif">Rapport</h2>
+      <h2 class="m-0" style="font-size:20px;font-weight:800">Rapport</h2>
       <p v-if="report" class="text-sm m-0">
         Statut :
         <strong>{{ report.success ? 'OK' : 'Échec' }}</strong>
@@ -161,7 +155,7 @@ function backToConfig() {
           [{{ entry.status }}] {{ entry.operation }} — {{ entry.message }}
         </li>
       </ul>
-      <ul v-if="report && report.errors && report.errors.length" class="m-0 pl-5 text-sm text-red-800">
+      <ul v-if="report && report.errors && report.errors.length" class="m-0 pl-5 text-sm" style="color:#8a1f1a">
         <li v-for="(err, i) in report.errors" :key="'e'+i">{{ err }}</li>
       </ul>
       <button type="button" class="forge-btn-ghost" @click="backToConfig">Nouveau projet</button>

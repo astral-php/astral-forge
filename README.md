@@ -1,8 +1,9 @@
 # Astral Forge
 
-Générateur de projets **Astral MVC 2.1** — préversion **0.3.1** (`@dev` jusqu’à 1.0.0).
+Générateur de projets **Astral MVC 2.1** — préversion **0.4.0** (`@dev` jusqu’à 1.0.0).
 
-Tutoriel infos : `astral-informations/astral-forge/Dossier-technique/docs/tuto-forge.md`
+Tutoriel infos : `astral-informations/astral-forge/Dossier-technique/docs/tuto-forge.md`  
+Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/news`
 
 - Blueprint JSON (schema v1)
 - Plan déterministe sans I/O (`php bin/forge plan`)
