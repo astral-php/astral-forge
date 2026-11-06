@@ -26,6 +26,7 @@ use App\Forge\Exception\UnsafePathException;
 use App\Forge\Plan\GenerationPlanner;
 use App\Forge\ProjectGenerationService;
 use App\Forge\Resolver\DependencyResolver;
+use App\Forge\Runtime\ToolchainResolver;
 use App\Forge\Security\SecurePathGuard;
 use App\Forge\Writer\ComposerCreateProjectRunner;
 use App\Forge\Writer\PlanExecutor;
@@ -33,19 +34,30 @@ use App\Forge\Writer\PlanExecutor;
 /** @var array{
  *     allowed_roots: list<string>,
  *     starter_package: string,
+ *     php_bin: string,
  *     composer_bin: string,
+ *     allow_apache_composer: bool,
  *     supported_recipes: list<string>,
  *     supported_targets: list<string>
  * } $forgeConfig
  */
 $forgeConfig = require BASE_PATH . '/config/forge.php';
 
+$composerRunner = new ComposerCreateProjectRunner(
+    new ToolchainResolver(
+        (string) ($forgeConfig['php_bin'] ?? ''),
+        (string) ($forgeConfig['composer_bin'] ?? ''),
+    ),
+    allowApacheComposer: (bool) ($forgeConfig['allow_apache_composer'] ?? false),
+);
+
 $service = new ProjectGenerationService(
     new BlueprintValidator($forgeConfig['supported_recipes'], $forgeConfig['supported_targets']),
     new DependencyResolver(),
     new GenerationPlanner($forgeConfig['starter_package']),
     new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH),
-    new PlanExecutor(new ComposerCreateProjectRunner($forgeConfig['composer_bin'])),
+    new PlanExecutor($composerRunner),
+    $composerRunner,
 );
 
 $argv = $_SERVER['argv'] ?? [];

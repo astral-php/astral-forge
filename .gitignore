@@ -6,6 +6,10 @@
 !/storage/logs/.gitkeep
 /storage/cache/*
 !/storage/cache/.gitkeep
+/storage/forge-pending/*
+!/storage/forge-pending/.gitkeep
+/storage/forge-jobs/*
+!/storage/forge-jobs/.gitkeep
 /.phpunit.result.cache
 composer.lock
 package-lock.json

@@ -1,0 +1,115 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Worker CLI pour un job de génération asynchrone.
+ *
+ * Usage : php bin/forge-job <jobId>
+ */
+
+define('BASE_PATH', dirname(__DIR__));
+
+require BASE_PATH . '/vendor/autoload.php';
+
+if (file_exists(BASE_PATH . '/.env')) {
+    Dotenv\Dotenv::createImmutable(BASE_PATH)->safeLoad();
+}
+
+use App\Forge\Blueprint\BlueprintValidator;
+use App\Forge\Job\GenerationJob;
+use App\Forge\Job\GenerationJobStore;
+use App\Forge\Plan\GenerationPlanner;
+use App\Forge\ProjectGenerationService;
+use App\Forge\Resolver\DependencyResolver;
+use App\Forge\Runtime\ToolchainResolver;
+use App\Forge\Security\SecurePathGuard;
+use App\Forge\Writer\ComposerCreateProjectRunner;
+use App\Forge\Writer\PlanExecutor;
+
+$jobId = $argv[1] ?? '';
+if ($jobId === '' || !preg_match('/^[a-f0-9]{16}$/', $jobId)) {
+    fwrite(STDERR, "Usage : php bin/forge-job <jobId>\n");
+    exit(1);
+}
+
+$store = new GenerationJobStore();
+$job = $store->get($jobId);
+if ($job === null) {
+    fwrite(STDERR, "Job introuvable : {$jobId}\n");
+    exit(1);
+}
+
+/** @var array{
+ *     allowed_roots: list<string>,
+ *     starter_package: string,
+ *     php_bin: string,
+ *     composer_bin: string,
+ *     allow_apache_composer: bool,
+ *     supported_recipes: list<string>,
+ *     supported_targets: list<string>
+ * } $forgeConfig
+ */
+$forgeConfig = require BASE_PATH . '/config/forge.php';
+
+$composerRunner = new ComposerCreateProjectRunner(
+    new ToolchainResolver(
+        (string) ($forgeConfig['php_bin'] ?? ''),
+        (string) ($forgeConfig['composer_bin'] ?? ''),
+    ),
+    allowApacheComposer: true,
+);
+
+$service = new ProjectGenerationService(
+    new BlueprintValidator($forgeConfig['supported_recipes'], $forgeConfig['supported_targets']),
+    new DependencyResolver(),
+    new GenerationPlanner($forgeConfig['starter_package']),
+    new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH),
+    new PlanExecutor($composerRunner),
+    $composerRunner,
+);
+
+$store->updateStatus($jobId, GenerationJob::STATUS_RUNNING);
+fwrite(STDOUT, '[' . date('c') . "] Job {$jobId} running → {$job->destination}\n");
+
+try {
+    $raw = file_get_contents($job->blueprintPath);
+    if ($raw === false) {
+        throw new RuntimeException('Lecture blueprint impossible.');
+    }
+    /** @var array<string, mixed> $blueprint */
+    $blueprint = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+
+    $report = $service->generate(
+        $blueprint,
+        $job->destination,
+        confirm: true,
+        dryRun: false,
+        allowAsyncFallback: false,
+    );
+
+    if (!$report->success) {
+        $store->updateStatus(
+            $jobId,
+            GenerationJob::STATUS_FAILED,
+            report: $report->toArray(),
+            error: implode(' ', $report->errors),
+        );
+        fwrite(STDERR, "Job failed\n");
+        exit(1);
+    }
+
+    $store->updateStatus(
+        $jobId,
+        GenerationJob::STATUS_DONE,
+        report: $report->toArray(),
+        error: null,
+    );
+    fwrite(STDOUT, '[' . date('c') . "] Job {$jobId} done\n");
+    exit(0);
+} catch (Throwable $e) {
+    $store->updateStatus($jobId, GenerationJob::STATUS_FAILED, error: $e->getMessage());
+    fwrite(STDERR, 'Job exception : ' . $e->getMessage() . "\n");
+    exit(1);
+}

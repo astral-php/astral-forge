@@ -1,6 +1,6 @@
 # Astral Forge
 
-Générateur de projets **Astral MVC 2.1** — préversion **0.4.0** (`@dev` jusqu’à 1.0.0).
+Générateur de projets **Astral MVC 2.1** — préversion **0.4.1** (`@dev` jusqu’à 1.0.0).
 
 Tutoriel infos : `astral-informations/astral-forge/Dossier-technique/docs/tuto-forge.md`  
 Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/news`
@@ -14,8 +14,23 @@ Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/new
 ## Prérequis
 
 - PHP ^8.3
-- Composer
+- Composer (`composer` / `composer.phar` joignable depuis le **même** process que le serveur web)
 - `astral-php/astral-core:^2.1`
+- `proc_open` activé (pas dans `disable_functions`)
+
+Sous **Laragon**, ajoutez Laragon au PATH (php, composer, git, node…). Si Apache n’hérite pas du PATH utilisateur, définissez dans `.env` :
+
+```env
+FORGE_PHP_BIN=D:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe
+FORGE_COMPOSER_BIN=D:\laragon\bin\composer\composer.phar
+```
+
+Forge préfère l’invocation **`php` + `composer.phar`** (évite les shims `.bat` sous Windows).
+
+**Apache Windows (Laragon)** : la génération web lance un **job en arrière-plan** (`bin/forge-job`) pour éviter le crash `mpm_winnt` — l’utilisateur reste dans l’interface.  
+Contournement sync expérimental : `FORGE_ALLOW_APACHE_COMPOSER=1`.
+
+Préflight : `GET /forge/api/environment`.
 
 ## Install
 

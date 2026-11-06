@@ -8,13 +8,16 @@ use App\Forge\Exception\GenerationException;
 use App\Forge\Exception\InvalidBlueprintException;
 use App\Forge\Exception\UnsafePathException;
 use App\Forge\ProjectGenerationService;
+use App\Forge\Support\Utf8;
 use Controller\AbstractController;
 use Core\Http\JsonResponse;
 use Core\Request;
 use Core\View;
+use JsonException;
+use Throwable;
 
 /**
- * Endpoints JSON pour l’UI Vue (plan / generate).
+ * Endpoints JSON pour l’UI Vue (plan / generate / jobs).
  */
 final class ForgeApiController extends AbstractController
 {
@@ -26,6 +29,16 @@ final class ForgeApiController extends AbstractController
         parent::__construct($view);
     }
 
+    public function environment(): JsonResponse
+    {
+        $status = $this->forge->environmentStatus();
+
+        return $this->jsonSafe([
+            'ok' => $status['ok'],
+            'environment' => $status,
+        ], $status['ok'] ? 200 : 503);
+    }
+
     public function plan(): JsonResponse
     {
         $form = $this->formFromJson();
@@ -33,12 +46,15 @@ final class ForgeApiController extends AbstractController
         try {
             $plan = $this->forge->plan($this->blueprintFromForm($form), $form['destination']);
 
-            return $this->json([
+            return $this->jsonSafe([
                 'ok' => true,
                 'plan' => $plan->toArray(),
+                'environment' => $this->forge->environmentStatus(),
             ]);
         } catch (InvalidBlueprintException | UnsafePathException $e) {
-            return $this->json(['ok' => false, 'error' => $e->getMessage()], 422);
+            return $this->jsonSafe(['ok' => false, 'error' => $e->getMessage()], 422);
+        } catch (Throwable $e) {
+            return $this->jsonSafe(['ok' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -48,27 +64,72 @@ final class ForgeApiController extends AbstractController
         $confirm = ($form['confirm'] ?? false) === true || ($form['confirm'] ?? '') === '1';
 
         if (!$confirm) {
-            return $this->json([
+            return $this->jsonSafe([
                 'ok' => false,
                 'error' => 'Confirmation requise avant génération.',
             ], 422);
         }
 
         try {
-            $report = $this->forge->generate(
+            $result = $this->forge->generateForWeb(
                 $this->blueprintFromForm($form),
                 $form['destination'],
                 confirm: true,
-                dryRun: false,
             );
 
-            return $this->json([
+            if ($result['mode'] === 'async') {
+                return $this->jsonSafe([
+                    'ok' => true,
+                    'async' => true,
+                    'job' => $result['job']->toArray(),
+                    'message' => 'Génération lancée en arrière-plan…',
+                ], 202);
+            }
+
+            $report = $result['report'];
+            $error = $report->success ? null : implode(' ', $report->errors);
+
+            return $this->jsonSafe([
                 'ok' => $report->success,
+                'async' => false,
                 'report' => $report->toArray(),
-                'error' => $report->success ? null : implode(' ', $report->errors),
+                'error' => $error,
             ], $report->success ? 200 : 422);
         } catch (InvalidBlueprintException | UnsafePathException | GenerationException $e) {
-            return $this->json(['ok' => false, 'error' => $e->getMessage()], 422);
+            return $this->jsonSafe(['ok' => false, 'error' => $e->getMessage()], 422);
+        } catch (Throwable $e) {
+            return $this->jsonSafe(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function job(string $id): JsonResponse
+    {
+        $job = $this->forge->getJob(trim($id));
+        if ($job === null) {
+            return $this->jsonSafe(['ok' => false, 'error' => 'Job introuvable.'], 404);
+        }
+
+        return $this->jsonSafe([
+            'ok' => true,
+            'job' => $job->toArray(),
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function jsonSafe(array $data, int $status = 200): JsonResponse
+    {
+        /** @var array<string, mixed> $safe */
+        $safe = Utf8::deep($data);
+
+        try {
+            return $this->json($safe, $status);
+        } catch (JsonException) {
+            return $this->json([
+                'ok' => false,
+                'error' => 'Réponse JSON invalide (encodage). Consultez storage/logs.',
+            ], 500);
         }
     }
 

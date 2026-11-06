@@ -28,6 +28,8 @@ return function (Router $router): void {
     $router->get('/forge', ForgeController::class, 'index');
     $router->post('/forge/plan', ForgeController::class, 'plan');
     $router->post('/forge/generate', ForgeController::class, 'generate');
+    $router->get('/forge/api/environment', ForgeApiController::class, 'environment');
+    $router->get('/forge/api/jobs/:id', ForgeApiController::class, 'job');
     $router->post('/forge/api/plan', ForgeApiController::class, 'plan');
     $router->post('/forge/api/generate', ForgeApiController::class, 'generate');
 

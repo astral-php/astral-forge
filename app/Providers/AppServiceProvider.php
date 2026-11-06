@@ -21,6 +21,9 @@ use App\Forge\Plan\GenerationPlanner;
 use App\Forge\ProjectGenerationService;
 use App\Forge\Resolver\DependencyResolver;
 use App\Forge\Security\SecurePathGuard;
+use App\Forge\Job\DetachedJobLauncher;
+use App\Forge\Job\GenerationJobStore;
+use App\Forge\Runtime\ToolchainResolver;
 use App\Forge\Writer\ComposerCreateProjectRunner;
 use App\Forge\Writer\PlanExecutor;
 use App\Listeners\LogRoleChange;
@@ -80,6 +83,7 @@ final class AppServiceProvider implements ServiceProviderInterface
             /** @var array{
              *     allowed_roots: list<string>,
              *     starter_package: string,
+             *     php_bin: string,
              *     composer_bin: string,
              *     supported_recipes: list<string>,
              *     supported_targets: list<string>
@@ -93,9 +97,15 @@ final class AppServiceProvider implements ServiceProviderInterface
             );
             $planner = new GenerationPlanner($forgeConfig['starter_package']);
             $pathGuard = new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH);
-            $executor = new PlanExecutor(
-                new ComposerCreateProjectRunner($forgeConfig['composer_bin'])
+            $toolchain = new ToolchainResolver(
+                (string) ($forgeConfig['php_bin'] ?? ''),
+                (string) ($forgeConfig['composer_bin'] ?? ''),
             );
+            $composerRunner = new ComposerCreateProjectRunner(
+                $toolchain,
+                allowApacheComposer: (bool) ($forgeConfig['allow_apache_composer'] ?? false),
+            );
+            $executor = new PlanExecutor($composerRunner);
 
             return new ProjectGenerationService(
                 $validator,
@@ -103,20 +113,23 @@ final class AppServiceProvider implements ServiceProviderInterface
                 $planner,
                 $pathGuard,
                 $executor,
+                $composerRunner,
+                new GenerationJobStore(),
+                new DetachedJobLauncher($toolchain),
             );
         });
 
         $container->bind(HomeController::class, fn(Container $c) => new HomeController(
             view:        $c->make(View::class),
             userDao:     $c->make(UserDao::class),
-            version:     (string) ($appConfig['version'] ?? '0.4.0'),
+            version:     (string) ($appConfig['version'] ?? '0.4.1'),
             githubUrl:   (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
             websiteUrl:  (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
         ));
 
         $container->bind(SiteController::class, fn(Container $c) => new SiteController(
             view:       $c->make(View::class),
-            version:    (string) ($appConfig['version'] ?? '0.4.0'),
+            version:    (string) ($appConfig['version'] ?? '0.4.1'),
             githubUrl:  (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
             websiteUrl: (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
         ));

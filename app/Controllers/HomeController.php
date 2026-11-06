@@ -17,7 +17,7 @@ final class HomeController extends AbstractController
     public function __construct(
         View $view,
         private UserDao $userDao,
-        private string $version = '0.4.0',
+        private string $version = '0.4.1',
         private string $githubUrl = 'https://github.com/astral-php/astral-forge',
         private string $websiteUrl = 'https://astral-php.dev',
     ) {

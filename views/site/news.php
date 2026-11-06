@@ -7,9 +7,13 @@
 
     <div class="content-stack">
         <article class="content-card">
-            <div class="content-card-head"><h2>0.4.0</h2><span class="tag tag-purple">@dev</span></div>
+            <div class="content-card-head"><h2>0.4.1</h2><span class="tag tag-purple">@dev</span></div>
+            <p>Runtime multi-OS : résolution PHP/Composer, génération web async sous Apache (Laragon), fix <code>httpd.exe</code>.</p>
+            <p class="content-meta">QA Win : blank · blog-lite · api-json · suite atelier 0.5.</p>
+        </article>
+        <article class="content-card">
+            <div class="content-card-head"><h2>0.4.0</h2><span class="tag tag-neutral">2026-11-01</span></div>
             <p>Refonte visuelle <strong>nova-red</strong> (home, nav, wizard) + pages Templates, Documentation, Découvrir, Extensions, Actualités.</p>
-            <p class="content-meta">Moteur inchangé · parcours création à valider en QA.</p>
         </article>
         <article class="content-card">
             <div class="content-card-head"><h2>0.3.1</h2><span class="tag tag-neutral">2026-10-31</span></div>
@@ -29,5 +33,5 @@
         </article>
     </div>
 
-    <p class="content-note">Suite prévue : polish 0.4.x si besoin, puis stabilisation <strong>1.0.0</strong>. Détail code : fichier <code>CHANGELOG.md</code> du dépôt.</p>
+    <p class="content-note">Suite prévue : atelier <strong>0.5.0</strong> (registre / migrate / module), puis stabilisation <strong>1.0.0</strong>. Détail : <code>CHANGELOG.md</code>.</p>
 </section>

@@ -1,5 +1,28 @@
 # Changelog — astral-forge
 
+## 0.4.1 — 2026-11-06
+
+### Ajouté
+
+- Résolveur **PHP + Composer** multi-OS (`ToolchainResolver`) — PATH, voisin Laragon `composer.phar`
+- Préflight `GET /forge/api/environment` + contrôle avant generate
+- Config `FORGE_PHP_BIN` / `FORGE_COMPOSER_BIN` (docs `.env.example`)
+- Génération web sous Apache Windows via **job détaché** (`bin/forge-job` + polling UI)
+- API `GET /forge/api/jobs/:id` pour suivi async
+
+### Modifié
+
+- `ComposerCreateProjectRunner` : invocation `php` + `composer.phar` ; stdout/stderr fichiers ; env `APPDATA` / `COMPOSER_HOME`
+- Sanitisation UTF-8 des erreurs Composer (évite HTTP 500 `JsonException` sous Windows)
+- Wizard : destination par défaut `../mon-application` ; suivi job en cours
+- Fix : sous Apache, ne plus prendre `PHP_BINARY=httpd.exe` — résolution `php.exe` (PATH / Laragon)
+
+### Notes
+
+- Préversion **`@dev`** jusqu’à **1.0.0**.
+- QA web Win validée : **blank** · **blog-lite** · **api-json**.
+- Suite : atelier **0.5.0** (registre projets / migrate / module).
+
 ## 0.4.0 — 2026-11-01
 
 ### Ajouté
