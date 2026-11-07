@@ -33,7 +33,7 @@ $navActive = static function (string $path) use ($uri): string {
             </a>
             <nav class="main-nav" aria-label="Navigation principale">
                 <a class="nav-link <?= $navActive('/') ?>" href="/">⌂ <span>Accueil</span></a>
-                <a class="nav-link <?= $navActive('/forge') ?>" href="/forge">▱ <span>Projets</span></a>
+                <a class="nav-link <?= $navActive('/forge') ?>" href="/forge">▱ <span>Mes projets</span></a>
                 <a class="nav-link <?= $navActive('/templates') ?>" href="/templates">▦ <span>Templates</span></a>
                 <a class="nav-link <?= $navActive('/docs') ?>" href="/docs">▤ <span>Documentation</span></a>
                 <a class="nav-link <?= $navActive('/extensions') ?>" href="/extensions">♧ <span>Extensions</span></a>
@@ -45,7 +45,7 @@ $navActive = static function (string $path) use ($uri): string {
                     <?php if ($auth->is(\Core\Auth\Role::Admin)): ?><a class="nav-utility" href="/admin/users">Admin</a><?php endif ?>
                     <form method="POST" action="/logout" class="logout-form"><?= $csrf->field() ?><button type="submit" class="nav-utility">Déconnexion</button></form>
                 <?php else: ?>
-                    <a class="btn btn-primary" href="/forge" style="padding:10px 16px;font-size:13px">Nouveau projet</a>
+                    <a class="btn btn-primary" href="/forge/new" style="padding:10px 16px;font-size:13px">Nouveau projet</a>
                 <?php endif ?>
             </div>
         </header>

@@ -17,6 +17,8 @@ if (file_exists(BASE_PATH . '/.env')) {
     Dotenv\Dotenv::createImmutable(BASE_PATH)->safeLoad();
 }
 
+use App\Dao\ForgeProjectDao;
+use App\Forge\Atelier\ProjectRegistry;
 use App\Forge\Blueprint\BlueprintValidator;
 use App\Forge\Job\GenerationJob;
 use App\Forge\Job\GenerationJobStore;
@@ -53,21 +55,40 @@ if ($job === null) {
  */
 $forgeConfig = require BASE_PATH . '/config/forge.php';
 
+$toolchain = new ToolchainResolver(
+    (string) ($forgeConfig['php_bin'] ?? ''),
+    (string) ($forgeConfig['composer_bin'] ?? ''),
+);
 $composerRunner = new ComposerCreateProjectRunner(
-    new ToolchainResolver(
-        (string) ($forgeConfig['php_bin'] ?? ''),
-        (string) ($forgeConfig['composer_bin'] ?? ''),
-    ),
+    $toolchain,
     allowApacheComposer: true,
 );
+$pathGuard = new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH);
+
+$registry = null;
+try {
+    $dbConfig = require BASE_PATH . '/config/database.php';
+    if (($dbConfig['driver'] ?? 'sqlite') === 'sqlite') {
+        $pdo = new PDO('sqlite:' . (string) $dbConfig['database']);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $dao = new ForgeProjectDao($pdo);
+        $dao->createTableIfNotExists();
+        $registry = new ProjectRegistry($dao, $pathGuard);
+    }
+} catch (Throwable) {
+    $registry = null;
+}
 
 $service = new ProjectGenerationService(
     new BlueprintValidator($forgeConfig['supported_recipes'], $forgeConfig['supported_targets']),
     new DependencyResolver(),
     new GenerationPlanner($forgeConfig['starter_package']),
-    new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH),
+    $pathGuard,
     new PlanExecutor($composerRunner),
     $composerRunner,
+    $store,
+    new App\Forge\Job\DetachedJobLauncher($toolchain),
+    $registry,
 );
 
 $store->updateStatus($jobId, GenerationJob::STATUS_RUNNING);

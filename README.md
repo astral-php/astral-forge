@@ -1,6 +1,6 @@
 # Astral Forge
 
-Générateur de projets **Astral MVC 2.1** — préversion **0.4.1** (`@dev` jusqu’à 1.0.0).
+Générateur de projets **Astral MVC 2.1** — préversion **0.5.0** (`@dev` jusqu’à 1.0.0).
 
 Tutoriel infos : `astral-informations/astral-forge/Dossier-technique/docs/tuto-forge.md`  
 Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/news`
@@ -9,7 +9,8 @@ Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/new
 - Plan déterministe sans I/O (`php bin/forge plan`)
 - Recettes : **blank** · **blog-lite** · **api-json**
 - Génération greenfield via `astral-starter:^2.1` + modules
-- UI **Vue 3** + **astral-vite** (nova-red) — wizard `/forge`
+- UI **Vue 3** + **astral-vite** (nova-red) — wizard `/forge/new`
+- **Atelier** : Mes projets · migrate / rollback · créer un module · supprimer projet
 
 ## Prérequis
 
@@ -35,7 +36,7 @@ Préflight : `GET /forge/api/environment`.
 ## Install
 
 ```bash
-composer create-project astral-php/astral-forge:^0.1 astral-forge
+composer create-project astral-php/astral-forge:^0.5 astral-forge
 cd astral-forge
 cp .env.example .env
 ```

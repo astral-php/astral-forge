@@ -13,7 +13,7 @@
             </div>
             <p>Application Astral vierge = <strong>astral-starter ^2.1</strong> (auth + admin users + layout).</p>
             <p class="content-meta">Après génération : auth starter, admin users.</p>
-            <a class="btn btn-primary" href="/forge">Générer blank</a>
+            <a class="btn btn-primary" href="/forge/new">Générer blank</a>
         </article>
 
         <article class="content-card">
@@ -23,7 +23,7 @@
             </div>
             <p>Starter + module <strong>Article</strong> (CRUD + liste publique). Package recommandé : <code>astral-form</code>.</p>
             <p class="content-meta">Piste : <code>/articles</code> dans le projet généré.</p>
-            <a class="btn btn-primary" href="/forge">Générer blog-lite</a>
+            <a class="btn btn-primary" href="/forge/new">Générer blog-lite</a>
         </article>
 
         <article class="content-card">
@@ -33,7 +33,7 @@
             </div>
             <p>Starter + routes API v1 + Cors (style hub).</p>
             <p class="content-meta">Piste : <code>GET /api/v1/health</code>.</p>
-            <a class="btn btn-primary" href="/forge">Générer api-json</a>
+            <a class="btn btn-primary" href="/forge/new">Générer api-json</a>
         </article>
     </div>
 

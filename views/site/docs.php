@@ -20,9 +20,9 @@ composer serve
         </table>
         <p>Si « Chargement de l’UI Forge… » reste affiché : Vite n’est pas joignable → passe en <code>production</code> ou lance <code>npm run dev</code>.</p>
 
-        <h2>2. Via l’UI (<a href="/forge">/forge</a>)</h2>
+        <h2>2. Via l’UI (<a href="/forge/new">/forge/new</a>) · atelier <a href="/forge">/forge</a>)</h2>
         <ol>
-            <li>Ouvre <a href="/">/</a> → <strong>Nouveau projet</strong> (ou <a href="/forge">/forge</a>).</li>
+            <li>Ouvre <a href="/">/</a> → <strong>Nouveau projet</strong> (ou <a href="/forge/new">/forge/new</a>) · après : <a href="/forge">Mes projets</a>.</li>
             <li><strong>Nom</strong> en kebab-case (<code>mon-blog</code>).</li>
             <li><strong>Destination</strong> sous la racine autorisée (ex. <code>../mon-blog</code>).</li>
             <li><strong>Recette :</strong> blank · blog-lite · api-json (détail <a href="/templates">Templates</a>).</li>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Forge;
 
+use App\Forge\Atelier\ProjectRegistry;
 use App\Forge\Blueprint\BlueprintValidator;
 use App\Forge\Exception\GenerationException;
 use App\Forge\Job\DetachedJobLauncher;
@@ -16,6 +17,7 @@ use App\Forge\Resolver\DependencyResolver;
 use App\Forge\Security\SecurePathGuard;
 use App\Forge\Writer\ComposerCreateProjectRunner;
 use App\Forge\Writer\PlanExecutor;
+use Throwable;
 
 /**
  * Orchestre validation → résolution → plan → (optionnel) écriture / job async.
@@ -31,6 +33,7 @@ final class ProjectGenerationService
         private readonly ComposerCreateProjectRunner $composerRunner = new ComposerCreateProjectRunner(),
         private readonly GenerationJobStore $jobStore = new GenerationJobStore(),
         private readonly DetachedJobLauncher $jobLauncher = new DetachedJobLauncher(),
+        private readonly ?ProjectRegistry $registry = null,
     ) {
     }
 
@@ -94,6 +97,7 @@ final class ProjectGenerationService
         if ($syncOk) {
             $this->composerRunner->assertReady();
             $report = $this->executor->execute($plan, false);
+            $this->recordIfSuccessful($blueprintData, $report);
 
             return ['mode' => 'sync', 'report' => $report];
         }
@@ -144,6 +148,25 @@ final class ProjectGenerationService
             }
         }
 
-        return $this->executor->execute($plan, $dryRun);
+        $report = $this->executor->execute($plan, $dryRun);
+        $this->recordIfSuccessful($blueprintData, $report);
+
+        return $report;
+    }
+
+    /**
+     * @param array<string, mixed> $blueprintData
+     */
+    public function recordIfSuccessful(array $blueprintData, GenerationReport $report): void
+    {
+        if ($this->registry === null || !$report->success || $report->dryRun) {
+            return;
+        }
+
+        try {
+            $this->registry->recordFromBlueprint($blueprintData, $report->destination);
+        } catch (Throwable) {
+            // Le rapport de génération prime ; l’upsert registre ne doit pas le casser.
+        }
     }
 }

@@ -17,7 +17,7 @@
         <ol>
             <li>Lire la <a href="/docs">documentation</a> (lancer + UI + CLI)</li>
             <li>Choisir un <a href="/templates">template</a></li>
-            <li>Ouvrir <a href="/forge">le générateur</a> → plan → confirmer → générer</li>
+            <li>Ouvrir <a href="/forge/new">le générateur</a> → plan → confirmer → générer</li>
         </ol>
 
         <h2>Mode actuel</h2>
@@ -36,7 +36,7 @@
     </div>
 
     <div class="hero-actions" style="margin-top:1.5rem">
-        <a class="btn btn-primary" href="/forge">Nouveau projet</a>
+        <a class="btn btn-primary" href="/forge/new">Nouveau projet</a>
         <a class="btn btn-ghost" href="<?= htmlspecialchars((string) $githubUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">GitHub</a>
     </div>
 </section>

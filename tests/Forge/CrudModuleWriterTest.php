@@ -69,6 +69,23 @@ PHP);
 
         $deps = (string) file_get_contents($this->root . '/config/dependencies.php');
         self::assertStringContainsString('ForgeGeneratedServiceProvider', $deps);
+
+        $controller = (string) file_get_contents($this->root . '/app/Controllers/ArticleController.php');
+        self::assertStringContainsString('RedirectResponse::to(', $controller);
+        self::assertStringNotContainsString('new RedirectResponse(', $controller);
+
+        $migrations = glob($this->root . '/database/migrations/*_create_articles_table.php') ?: [];
+        self::assertCount(1, $migrations);
+        $migration = (string) file_get_contents($migrations[0]);
+        self::assertStringContainsString('class CreateArticlesTable extends Migration', $migration);
+        self::assertStringContainsString('use Database\\Migration\\Migration;', $migration);
+        self::assertStringNotContainsString('MigrationInterface', $migration);
+        self::assertStringNotContainsString('return new class', $migration);
+
+        $lint = [];
+        $code = 0;
+        exec('php -l ' . escapeshellarg($migrations[0]) . ' 2>&1', $lint, $code);
+        self::assertSame(0, $code, implode("\n", $lint));
     }
 
     public function testWritesApiBootstrap(): void

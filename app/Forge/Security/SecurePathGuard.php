@@ -45,6 +45,56 @@ final class SecurePathGuard
         return $resolved;
     }
 
+    /**
+     * Résout un dossier projet déjà présent et confinable.
+     */
+    public function resolveExistingDirectory(string $path): string
+    {
+        $path = trim($path);
+        if ($path === '') {
+            throw new UnsafePathException('Chemin projet vide.');
+        }
+
+        $absolute = $this->toAbsolute($path);
+        $normalized = $this->resolveDotSegments($absolute);
+        $real = realpath($normalized);
+        if ($real === false || !is_dir($real)) {
+            throw new UnsafePathException('Projet introuvable ou inaccessible.');
+        }
+
+        $resolved = $this->normalize($real);
+        $this->assertWithinAllowed($resolved);
+
+        return $resolved;
+    }
+
+    /**
+     * Comme resolveExistingDirectory, mais refuse de cibler une racine autorisée
+     * (évite d’effacer tout le sandbox FORGE_ALLOWED_ROOT).
+     */
+    public function resolveDeletableProjectDirectory(string $path): string
+    {
+        $resolved = $this->resolveExistingDirectory($path);
+        $normalizedResolved = $this->normalize($resolved);
+
+        foreach ($this->allowedRoots as $root) {
+            $absoluteRoot = $this->isAbsolute($root)
+                ? $root
+                : $this->basePath . DIRECTORY_SEPARATOR . $root;
+            $realRoot = realpath($absoluteRoot);
+            if ($realRoot === false) {
+                continue;
+            }
+            if ($normalizedResolved === $this->normalize($realRoot)) {
+                throw new UnsafePathException(
+                    'Impossible de supprimer une racine autorisée (FORGE_ALLOWED_ROOT).'
+                );
+            }
+        }
+
+        return $resolved;
+    }
+
     private function toAbsolute(string $destination): string
     {
         if ($this->isAbsolute($destination)) {

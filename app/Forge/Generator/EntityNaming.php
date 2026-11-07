@@ -8,11 +8,20 @@ final class EntityNaming
 {
     public static function toSnakePlural(string $pascal): string
     {
+        $irregular = [
+            'news' => 'news',
+            'person' => 'people',
+            'child' => 'children',
+        ];
+
         $snake = strtolower((string) preg_replace('/[A-Z]/', '_$0', lcfirst($pascal)));
-        if (str_ends_with($snake, 'y')) {
+        if (isset($irregular[$snake])) {
+            return $irregular[$snake];
+        }
+        if (str_ends_with($snake, 'y') && !preg_match('/[aeiou]y$/', $snake)) {
             return substr($snake, 0, -1) . 'ies';
         }
-        if (str_ends_with($snake, 's') || str_ends_with($snake, 'x')) {
+        if (str_ends_with($snake, 's') || str_ends_with($snake, 'x') || str_ends_with($snake, 'ch') || str_ends_with($snake, 'sh')) {
             return $snake . 'es';
         }
 

@@ -1,0 +1,77 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Worker CLI atelier (migrate, …).
+ *
+ * Usage : php bin/forge-cli-job <jobId>
+ */
+
+define('BASE_PATH', dirname(__DIR__));
+
+require BASE_PATH . '/vendor/autoload.php';
+
+if (file_exists(BASE_PATH . '/.env')) {
+    Dotenv\Dotenv::createImmutable(BASE_PATH)->safeLoad();
+}
+
+use App\Forge\Atelier\ProjectConsoleRunner;
+use App\Forge\Job\CliJob;
+use App\Forge\Job\CliJobStore;
+use App\Forge\Runtime\ToolchainResolver;
+use App\Forge\Security\SecurePathGuard;
+
+$jobId = $argv[1] ?? '';
+if ($jobId === '' || !preg_match('/^[a-f0-9]{16}$/', $jobId)) {
+    fwrite(STDERR, "Usage : php bin/forge-cli-job <jobId>\n");
+    exit(1);
+}
+
+$store = new CliJobStore();
+$job = $store->get($jobId);
+if ($job === null) {
+    fwrite(STDERR, "Job CLI introuvable : {$jobId}\n");
+    exit(1);
+}
+
+/** @var array{allowed_roots: list<string>} $forgeConfig */
+$forgeConfig = require BASE_PATH . '/config/forge.php';
+$pathGuard = new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH);
+
+$store->updateStatus($jobId, CliJob::STATUS_RUNNING);
+fwrite(STDOUT, '[' . date('c') . "] CLI job {$jobId} running ({$job->type})\n");
+
+try {
+    $projectPath = $pathGuard->resolveExistingDirectory($job->projectPath);
+    $runner = new ProjectConsoleRunner(new ToolchainResolver(
+        (string) (($forgeConfig['php_bin'] ?? '')),
+        (string) (($forgeConfig['composer_bin'] ?? '')),
+    ));
+    $result = $runner->runSync($projectPath, $job->argv);
+
+    if (!$result['ok']) {
+        $store->updateStatus(
+            $jobId,
+            CliJob::STATUS_FAILED,
+            output: $result['output'],
+            error: $result['error'] ?? 'Échec commande console.',
+        );
+        fwrite(STDERR, "CLI job failed\n");
+        exit(1);
+    }
+
+    $store->updateStatus(
+        $jobId,
+        CliJob::STATUS_DONE,
+        output: $result['output'],
+        error: null,
+    );
+    fwrite(STDOUT, '[' . date('c') . "] CLI job {$jobId} done\n");
+    exit(0);
+} catch (Throwable $e) {
+    $store->updateStatus($jobId, CliJob::STATUS_FAILED, error: $e->getMessage());
+    fwrite(STDERR, 'CLI job exception : ' . $e->getMessage() . "\n");
+    exit(1);
+}

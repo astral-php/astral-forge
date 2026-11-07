@@ -5,7 +5,7 @@
         <h2>Créez rapidement des applications avec<br class="desktop-break"> le framework Astral PHP</h2>
         <p class="hero-description">Blueprint déclaratif, plan sans I/O, génération greenfield sur <strong>astral-starter ^2.1</strong>. Outil local — pas de compte requis.</p>
         <div class="hero-actions">
-            <a class="btn btn-primary" href="/forge"><span class="btn-plus">＋</span> Nouveau projet</a>
+            <a class="btn btn-primary" href="/forge/new"><span class="btn-plus">＋</span> Nouveau projet</a>
             <a class="btn btn-ghost" href="/discover"><span>▶</span> Découvrir Forge</a>
         </div>
         <div class="hero-meta"><span><i></i> Génération locale</span><span>PHP 8.3+</span><span>Blueprint JSON</span></div>
@@ -39,7 +39,7 @@
     <article class="dashboard-card quick-card">
         <div class="card-heading"><span class="heading-icon">ϟ</span><h2>Accès rapide</h2></div>
         <div class="quick-grid">
-            <a class="quick-action" href="/forge"><span>＋</span><strong>Nouveau projet</strong></a>
+            <a class="quick-action" href="/forge/new"><span>＋</span><strong>Nouveau projet</strong></a>
             <a class="quick-action" href="/templates"><span>▦</span><strong>Templates</strong></a>
             <a class="quick-action" href="/docs"><span>▤</span><strong>Documentation</strong></a>
             <a class="quick-action" href="/news"><span>▥</span><strong>Actualités</strong></a>

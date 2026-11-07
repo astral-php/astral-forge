@@ -31,6 +31,11 @@ final class ForgeController extends AbstractController
 
     public function index(): Response
     {
+        return $this->create();
+    }
+
+    public function create(): Response
+    {
         return $this->render('forge/index', [
             'title' => 'Forge — nouveau projet',
         ]);
@@ -70,7 +75,7 @@ final class ForgeController extends AbstractController
         if (!$confirm) {
             $this->session->flash('error', 'Cochez la confirmation avant de générer.');
 
-            return new RedirectResponse('/forge');
+            return RedirectResponse::to('/forge/new');
         }
 
         try {

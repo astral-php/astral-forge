@@ -2,7 +2,7 @@
   "name": "astral-php/astral-forge",
   "description": "Astral Forge — générateur de projets Astral MVC 2.1 (blueprint, plan, génération)",
   "type": "project",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "license": "MIT",
   "keywords": [
     "astral",

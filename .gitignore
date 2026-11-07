@@ -10,6 +10,8 @@
 !/storage/forge-pending/.gitkeep
 /storage/forge-jobs/*
 !/storage/forge-jobs/.gitkeep
+/storage/forge-cli-jobs/*
+!/storage/forge-cli-jobs/.gitkeep
 /.phpunit.result.cache
 composer.lock
 package-lock.json

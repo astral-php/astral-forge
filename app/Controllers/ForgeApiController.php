@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Forge\Atelier\AtelierService;
 use App\Forge\Exception\GenerationException;
 use App\Forge\Exception\InvalidBlueprintException;
 use App\Forge\Exception\UnsafePathException;
@@ -17,7 +18,7 @@ use JsonException;
 use Throwable;
 
 /**
- * Endpoints JSON pour l’UI Vue (plan / generate / jobs).
+ * Endpoints JSON pour l’UI Vue (plan / generate / jobs / atelier).
  */
 final class ForgeApiController extends AbstractController
 {
@@ -25,6 +26,7 @@ final class ForgeApiController extends AbstractController
         View $view,
         private readonly Request $request,
         private readonly ProjectGenerationService $forge,
+        private readonly AtelierService $atelier,
     ) {
         parent::__construct($view);
     }
@@ -107,6 +109,19 @@ final class ForgeApiController extends AbstractController
         $job = $this->forge->getJob(trim($id));
         if ($job === null) {
             return $this->jsonSafe(['ok' => false, 'error' => 'Job introuvable.'], 404);
+        }
+
+        return $this->jsonSafe([
+            'ok' => true,
+            'job' => $job->toArray(),
+        ]);
+    }
+
+    public function cliJob(string $id): JsonResponse
+    {
+        $job = $this->atelier->getCliJob(trim($id));
+        if ($job === null) {
+            return $this->jsonSafe(['ok' => false, 'error' => 'Job CLI introuvable.'], 404);
         }
 
         return $this->jsonSafe([

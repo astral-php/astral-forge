@@ -44,7 +44,7 @@ final class CrudModuleWriter
         $migrationName = date('Y_m_d_His') . '_create_' . $table . '_table.php';
         $written[] = $this->writeFile(
             $projectRoot . '/database/migrations/' . $migrationName,
-            $this->migrationStub($table)
+            $this->migrationStub($table, $this->migrationClassName($table))
         );
 
         foreach (['index', 'show', 'create', 'edit'] as $view) {
@@ -254,7 +254,8 @@ final class {$entity}Controller extends AbstractController
         ]);
         \$this->session->flash('success', '{$entity} créé.');
 
-        return new RedirectResponse('/{$table}/' . \$id);
+        // Liste plutôt que fiche : parcours atelier / todo plus naturel que blog.
+        return RedirectResponse::to('/{$table}');
     }
 
     public function edit(string \$id): Response
@@ -298,7 +299,7 @@ final class {$entity}Controller extends AbstractController
         ]);
         \$this->session->flash('success', '{$entity} mis à jour.');
 
-        return new RedirectResponse('/{$table}/' . \$id);
+        return RedirectResponse::to('/{$table}/' . \$id);
     }
 
     public function destroy(string \$id): Response
@@ -306,7 +307,7 @@ final class {$entity}Controller extends AbstractController
         \$this->{$var}Dao->delete((int) \$id);
         \$this->session->flash('success', '{$entity} supprimé.');
 
-        return new RedirectResponse('/{$table}');
+        return RedirectResponse::to('/{$table}');
     }
 
     private function slugify(string \$title): string
@@ -321,31 +322,56 @@ final class {$entity}Controller extends AbstractController
 PHP;
     }
 
-    private function migrationStub(string $table): string
+    /**
+     * Aligné sur Migrator::fileToClass — create_{table}_table → Create{Table}Table.
+     */
+    private function migrationClassName(string $table): string
+    {
+        return 'Create' . str_replace(' ', '', ucwords(str_replace('_', ' ', $table))) . 'Table';
+    }
+
+    private function migrationStub(string $table, string $className): string
     {
         return <<<PHP
 <?php
 
 declare(strict_types=1);
 
-use Database\Migration\MigrationInterface;
-use PDO;
+use Database\Migration\Migration;
 
-return new class implements MigrationInterface
+class {$className} extends Migration
 {
     public function up(PDO \$pdo): void
     {
-        \$pdo->exec(<<<'SQL'
-            CREATE TABLE IF NOT EXISTS {$table} (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                slug TEXT NOT NULL,
-                body TEXT NOT NULL DEFAULT '',
-                published_at TEXT NULL,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-            SQL);
+        \$driver = \$pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        if (\$driver === 'sqlite') {
+            \$pdo->exec(<<<'SQL'
+                CREATE TABLE IF NOT EXISTS {$table} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    slug TEXT NOT NULL,
+                    body TEXT NOT NULL DEFAULT '',
+                    published_at TEXT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                )
+                SQL);
+        } else {
+            \$pdo->exec(<<<'SQL'
+                CREATE TABLE IF NOT EXISTS `{$table}` (
+                    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `title` VARCHAR(180) NOT NULL,
+                    `slug` VARCHAR(180) NOT NULL,
+                    `body` TEXT NOT NULL,
+                    `published_at` DATETIME NULL,
+                    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `{$table}_slug_unique` (`slug`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                SQL);
+        }
     }
 
     public function down(PDO \$pdo): void

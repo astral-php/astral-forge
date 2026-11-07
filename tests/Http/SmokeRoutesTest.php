@@ -15,9 +15,16 @@ final class SmokeRoutesTest extends HttpSmokeTestCase
         $this->assertStringContainsString('Découvrir Forge', $response->getContent());
     }
 
-    public function testForgeFormReturns200(): void
+    public function testForgeProjectsListReturns200(): void
     {
         $response = $this->get('/forge');
+        $this->assertSame(200, $response->getStatus());
+        $this->assertStringContainsString('Mes projets', $response->getContent());
+    }
+
+    public function testForgeNewWizardReturns200(): void
+    {
+        $response = $this->get('/forge/new');
         $this->assertSame(200, $response->getStatus());
         $this->assertStringContainsString('forge-app', $response->getContent());
         $this->assertStringContainsString('php bin/forge plan|generate', $response->getContent());
