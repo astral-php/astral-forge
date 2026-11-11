@@ -90,7 +90,7 @@ $migrationShort = static function (string $file): string {
                 </div>
                 <?php if ($modules === []): ?>
                     <p>Aucun module métier (hors auth <code>User</code>).</p>
-                    <p class="content-meta">Ex. <strong>Category</strong> — migrate auto.</p>
+                    <p class="content-meta">Ex. <strong>Category</strong> → <code>/categories</code> — migrate auto. Nav layout = manuelle.</p>
                 <?php else: ?>
                     <ul class="forge-module-list">
                         <?php foreach ($modules as $mod): ?>
@@ -173,13 +173,32 @@ $migrationShort = static function (string $file): string {
 
             <article class="content-card forge-project-card">
                 <div class="content-card-head"><h2>Créer un module</h2></div>
-                <p class="content-meta">PascalCase + migrate auto. Réservés : <code>User</code>…</p>
-                <form method="POST" action="/forge/projects/<?= (int) $project->id ?>/modules" class="form-stack">
+                <p class="content-meta">
+                    English <strong>singular</strong> PascalCase (ex. <code>Category</code>, <code>Task</code>)
+                    → table plurielle (<code>categories</code>). Migrate auto.
+                </p>
+                <p class="content-meta">
+                    Les liens de navigation <strong>ne sont pas ajoutés automatiquement</strong> —
+                    ajoutez la route (ex. <code>/tasks</code>) dans le layout du projet généré.
+                </p>
+                <form method="POST" action="/forge/projects/<?= (int) $project->id ?>/modules" class="form-stack" id="forge-module-form">
                     <?= $csrf->field() ?>
                     <div class="field">
-                        <label for="entity">Entité</label>
-                        <input class="input" id="entity" name="entity" value="<?= htmlspecialchars((string) ($moduleResult['entity'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Category" required pattern="[A-Z][A-Za-z0-9]*" />
+                        <label for="entity">Entité (singulier)</label>
+                        <input
+                            class="input"
+                            id="entity"
+                            name="entity"
+                            value="<?= htmlspecialchars((string) ($moduleResult['entity'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                            placeholder="Category"
+                            required
+                            pattern="[A-Z][A-Za-z0-9]*"
+                            autocomplete="off"
+                        />
                     </div>
+                    <p id="entity-preview" class="content-meta" aria-live="polite">
+                        Aperçu : table / route apparaîtront ici.
+                    </p>
                     <label class="forge-confirm-label">
                         <input type="checkbox" name="confirm" value="1" required />
                         <span>J’écris les fichiers <strong>et</strong> je migre.</span>
@@ -307,3 +326,46 @@ $migrationShort = static function (string $file): string {
 })()
 </script>
 <?php endif ?>
+
+<script>
+(function () {
+  const input = document.getElementById('entity')
+  const preview = document.getElementById('entity-preview')
+  if (!input || !preview) return
+  let timer = null
+  const render = async () => {
+    const name = input.value.trim()
+    if (!name) {
+      preview.textContent = 'Aperçu : table / route apparaîtront ici.'
+      return
+    }
+    try {
+      const res = await fetch('/forge/api/entity-preview?name=' + encodeURIComponent(name), {
+        headers: { Accept: 'application/json' },
+      })
+      const data = await res.json()
+      const p = data.preview || {}
+      if (p.error) {
+        preview.textContent = p.error
+        return
+      }
+      let text = 'Aperçu : entité ' + (p.entity || '?')
+        + ' · table ' + (p.table || '?')
+        + ' · route ' + (p.route || '?')
+      if (p.suggested_entity) {
+        text += ' — suggéré : ' + p.suggested_entity + ' (singulier)'
+      } else if (p.warnings && p.warnings.length) {
+        text += ' — ' + p.warnings[0]
+      }
+      preview.textContent = text
+    } catch (e) {
+      preview.textContent = 'Aperçu indisponible.'
+    }
+  }
+  input.addEventListener('input', () => {
+    clearTimeout(timer)
+    timer = setTimeout(render, 220)
+  })
+  if (input.value.trim()) render()
+})()
+</script>

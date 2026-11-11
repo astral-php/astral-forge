@@ -6,6 +6,7 @@ namespace App\Forge\Atelier;
 
 use App\Forge\Exception\GenerationException;
 use App\Forge\Generator\CrudModuleWriter;
+use App\Forge\Generator\EntityNaming;
 use App\Forge\Job\CliJob;
 use App\Models\ForgeProject;
 use InvalidArgumentException;
@@ -66,19 +67,7 @@ final class AtelierService
             throw new GenerationException('Confirmation requise avant de créer un module.');
         }
 
-        $entity = trim($entity);
-        if (!preg_match('/^[A-Z][a-zA-Z0-9]*$/', $entity)) {
-            throw new GenerationException(
-                'Nom d’entité invalide (PascalCase attendu, ex. Article).'
-            );
-        }
-
-        $reserved = ['User', 'Home', 'Auth', 'Profile', 'Admin', 'Api', 'Forge'];
-        if (in_array($entity, $reserved, true)) {
-            throw new GenerationException(
-                'Entité réservée : ' . $entity . '. Choisissez un autre nom (ex. Task, Category).'
-            );
-        }
+        $entity = EntityNaming::assertValidEntity($entity);
 
         $project = $this->registry->requireExisting($projectId);
         // Liste + fiche publiques : parcours web local sans mur login après création.

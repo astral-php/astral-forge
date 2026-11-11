@@ -11,6 +11,7 @@ use App\Forge\Atelier\ProjectRegistry;
 use App\Forge\Exception\GenerationException;
 use App\Forge\Exception\UnsafePathException;
 use App\Forge\Generator\EntityNaming;
+use App\Forge\Install\InstallGate;
 use App\Models\ForgeProject;
 use Controller\AbstractController;
 use Core\Http\RedirectResponse;
@@ -33,6 +34,7 @@ final class ForgeProjectsController extends AbstractController
         private readonly Session $session,
         private readonly ProjectRegistry $registry,
         private readonly AtelierService $atelier,
+        private readonly InstallGate $install,
         private readonly ProjectInspector $inspector = new ProjectInspector(),
         private readonly ProjectMigrationInspector $migrationInspector = new ProjectMigrationInspector(),
     ) {
@@ -46,6 +48,10 @@ final class ForgeProjectsController extends AbstractController
 
     public function index(): Response
     {
+        if ($this->install->needsMigrate()) {
+            return $this->redirectTo('/setup');
+        }
+
         $projects = $this->registry->all();
 
         return $this->render('forge/projects', [
@@ -227,8 +233,9 @@ final class ForgeProjectsController extends AbstractController
             $route = '/' . EntityNaming::toSnakePlural($entity);
             $this->session->flash(
                 'success',
-                'Module ' . $entity . ' créé et migré (' . $fileCount . ' fichiers). Ouvrir '
-                . $route . ' dans l’app (connecté).'
+                'Module ' . $entity . ' créé et migré (' . $fileCount . ' fichiers). '
+                . 'Ouvrir ' . $route . ' dans l’app. '
+                . 'Ajoutez ce lien dans le layout (nav non générée automatiquement).'
             );
         } else {
             $this->session->flash(

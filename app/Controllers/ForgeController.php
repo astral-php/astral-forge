@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Forge\Exception\GenerationException;
 use App\Forge\Exception\InvalidBlueprintException;
 use App\Forge\Exception\UnsafePathException;
+use App\Forge\Install\InstallGate;
 use App\Forge\ProjectGenerationService;
 use Controller\AbstractController;
 use Core\Http\RedirectResponse;
@@ -25,6 +26,7 @@ final class ForgeController extends AbstractController
         private readonly Request $request,
         private readonly Session $session,
         private readonly ProjectGenerationService $forge,
+        private readonly InstallGate $install,
     ) {
         parent::__construct($view);
     }
@@ -36,6 +38,10 @@ final class ForgeController extends AbstractController
 
     public function create(): Response
     {
+        if ($this->install->needsMigrate()) {
+            return RedirectResponse::to('/setup');
+        }
+
         return $this->render('forge/index', [
             'title' => 'Forge — nouveau projet',
         ]);

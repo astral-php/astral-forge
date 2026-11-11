@@ -1,5 +1,39 @@
 # Changelog — astral-forge
 
+## 0.6.0 — 2026-11-11
+
+Install from-scratch Win/Linux — préversion **`@dev`** (pas de news site tant que `^0.6` non stable).
+
+### Ajouté
+
+- `composer forge:env` / `php bin/forge-env` — génère `.env` **production** + détection OS (PHP/Composer) + `FORGE_ALLOWED_ROOT` (parent de Forge)
+- Hook `post-create-project-cmd` → `@forge:env`
+- `.env.example` aligné 0.6 (production par défaut, chemins documentés)
+- Setup web `/setup` — « Installer / Migrer » si migrations Forge en attente ; redirect depuis `/forge` et `/forge/new`
+- `composer forge:migrate` → `php bin/console migrate`
+- `GET /forge/api/environment` expose `install` + `setup_url`
+
+### Corrigé
+
+- `bin/console` : wiring `ToolchainResolver` + `ComposerCreateProjectRunner` (migrate CLI)
+
+### Amélioré
+
+- Messages **Permission denied** explicites (racine projets + hint Linux www-data)
+- `COMPOSER_HOME` : fallback `storage/composer-home` si home FPM non writable ; exposé dans `/forge/api/environment`
+- Préflight : racines `FORGE_ALLOWED_ROOT` non writable → erreur claire
+
+### Modules
+
+- Doc UI : nav layout **manuelle** (lien non auto)
+- Entité = English **singular** PascalCase ASCII ; table = pluriel ; aperçu live `/forge/api/entity-preview`
+- Refus pluriel / accents + suggest singulier (ex. Categories → Category)
+
+### Suite 0.6
+
+- QA create-project Win+Linux · tag **0.6.0 `@dev`** (Packagist)
+- **Pas de news** tant que la ligne n’est pas **`^0.6` stable** (correctifs 0.6.x `@dev` d’abord)
+
 ## 0.5.0 — 2026-11-07
 
 Atelier post-génération — préversion **`@dev`** (contrat stable = **1.0.0**).

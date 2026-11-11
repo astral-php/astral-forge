@@ -32,6 +32,8 @@ use App\Forge\Plan\GenerationPlanner;
 use App\Forge\ProjectGenerationService;
 use App\Forge\Resolver\DependencyResolver;
 use App\Forge\Security\SecurePathGuard;
+use App\Forge\Runtime\RuntimeHealth;
+use App\Forge\Runtime\ToolchainResolver;
 use App\Forge\Writer\ComposerCreateProjectRunner;
 use App\Forge\Writer\PlanExecutor;
 
@@ -40,18 +42,31 @@ $console = new Console(appName: 'Astral Forge Console');
 /** @var array{
  *     allowed_roots: list<string>,
  *     starter_package: string,
+ *     php_bin: string,
  *     composer_bin: string,
+ *     allow_apache_composer: bool,
  *     supported_recipes: list<string>,
  *     supported_targets: list<string>
  * } $forgeConfig
  */
 $forgeConfig = require BASE_PATH . '/config/forge.php';
+$toolchain = new ToolchainResolver(
+    (string) ($forgeConfig['php_bin'] ?? ''),
+    (string) ($forgeConfig['composer_bin'] ?? ''),
+);
+$health = new RuntimeHealth(BASE_PATH, $forgeConfig['allowed_roots']);
+$composerRunner = new ComposerCreateProjectRunner(
+    $toolchain,
+    allowApacheComposer: (bool) ($forgeConfig['allow_apache_composer'] ?? false),
+    health: $health,
+);
 $forgeService = new ProjectGenerationService(
     new BlueprintValidator($forgeConfig['supported_recipes'], $forgeConfig['supported_targets']),
     new DependencyResolver(),
     new GenerationPlanner($forgeConfig['starter_package']),
     new SecurePathGuard($forgeConfig['allowed_roots'], BASE_PATH),
-    new PlanExecutor(new ComposerCreateProjectRunner($forgeConfig['composer_bin'])),
+    new PlanExecutor($composerRunner),
+    $composerRunner,
 );
 
 $console->register(new ForgePlanCommand($forgeService));

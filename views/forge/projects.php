@@ -3,7 +3,7 @@
 ?>
 <section class="content-page">
     <header class="content-hero">
-        <p class="eyebrow"><span class="eyebrow-mark"></span> ATELIER · 0.5</p>
+        <p class="eyebrow"><span class="eyebrow-mark"></span> ATELIER · 0.6</p>
         <h1>Mes projets</h1>
         <p class="content-lead">Projets générés par Forge — migrer, créer un module, ou ouvrir le dossier.</p>
         <?php if ($projects !== []): ?>

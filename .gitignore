@@ -12,6 +12,8 @@
 !/storage/forge-jobs/.gitkeep
 /storage/forge-cli-jobs/*
 !/storage/forge-cli-jobs/.gitkeep
+/storage/composer-home/*
+!/storage/composer-home/.gitkeep
 /.phpunit.result.cache
 composer.lock
 package-lock.json

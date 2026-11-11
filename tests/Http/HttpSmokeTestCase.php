@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Http;
 
+use App\Forge\Install\InstallGate;
 use Core\Auth\Auth;
 use Core\Container;
 use Core\CsrfGuard;
@@ -87,6 +88,9 @@ abstract class HttpSmokeTestCase extends TestCase
         foreach ($providers as $providerClass) {
             (new $providerClass())->register($container, $appConfig, $dbConfig);
         }
+
+        // BDD mémoire vierge → appliquer migrations Forge (évite redirect /setup)
+        $container->make(InstallGate::class)->migrate();
 
         /** @var Session $session */
         $session = $container->make(Session::class);

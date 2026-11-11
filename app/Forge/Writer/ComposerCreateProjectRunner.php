@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Forge\Writer;
 
 use App\Forge\Exception\GenerationException;
+use App\Forge\Runtime\RuntimeHealth;
 use App\Forge\Runtime\ToolchainResolver;
 use App\Forge\Support\Utf8;
 
@@ -16,10 +17,16 @@ use App\Forge\Support\Utf8;
  */
 final class ComposerCreateProjectRunner
 {
+    private readonly RuntimeHealth $health;
+
     public function __construct(
         private readonly ToolchainResolver $toolchain = new ToolchainResolver(),
         private readonly bool $allowApacheComposer = false,
+        ?RuntimeHealth $health = null,
     ) {
+        $this->health = $health ?? new RuntimeHealth(
+            defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3),
+        );
     }
 
     public function toolchain(): ToolchainResolver
@@ -47,6 +54,8 @@ final class ComposerCreateProjectRunner
      *     sapi: string,
      *     web_generate_allowed: bool,
      *     web_generate_hint: ?string,
+     *     composer_home: array{path: string, writable: bool, source: string, hint: ?string},
+     *     allowed_roots: list<array{path: string, writable: bool}>,
      *     errors: list<string>
      * }
      */
@@ -59,11 +68,33 @@ final class ComposerCreateProjectRunner
             : 'Apache Windows (Laragon) : génération web désactivée (mpm_winnt). '
                 . 'Utilisez la CLI après le plan, ou `composer serve`, ou FORGE_ALLOW_APACHE_COMPOSER=1.';
 
+        $composerHome = $this->health->composerHomeStatus();
+        if (!$composerHome['writable'] && is_string($composerHome['hint'])) {
+            $status['errors'][] = $composerHome['hint'];
+            $status['ok'] = false;
+        }
+
+        $roots = $this->health->allowedRootsStatus();
+        $writableRoot = false;
+        foreach ($roots as $root) {
+            if ($root['writable']) {
+                $writableRoot = true;
+                break;
+            }
+        }
+        if ($roots !== [] && !$writableRoot) {
+            $status['errors'][] = 'Aucune racine FORGE_ALLOWED_ROOT writable pour l’utilisateur PHP. '
+                . 'Sous Linux : chgrp/chmod sur le dossier projets, ou changez FORGE_ALLOWED_ROOT.';
+            $status['ok'] = false;
+        }
+
         return [
             ...$status,
             'sapi' => PHP_SAPI,
             'web_generate_allowed' => $allowed,
             'web_generate_hint' => $hint,
+            'composer_home' => $composerHome,
+            'allowed_roots' => $roots,
         ];
     }
 
@@ -127,10 +158,12 @@ final class ComposerCreateProjectRunner
             if (strlen($detail) > 4000) {
                 $detail = substr($detail, 0, 4000) . '…';
             }
-            throw new GenerationException(
-                'composer create-project a échoué (code ' . $code . ')'
-                . ($detail !== '' ? ' : ' . $detail : '.')
-            );
+            $message = 'composer create-project a échoué (code ' . $code . ')'
+                . ($detail !== '' ? ' : ' . $detail : '.');
+            if ($this->health->looksLikePermissionError($detail)) {
+                $message .= ' — ' . $this->health->permissionDeniedHint($directory);
+            }
+            throw new GenerationException($message);
         }
     }
 
@@ -178,7 +211,7 @@ final class ComposerCreateProjectRunner
     }
 
     /**
-     * Environnement pour Composer (PATH + home Windows ; sans vars Apache inutiles).
+     * Environnement pour Composer (PATH + COMPOSER_HOME writable ; sans vars Apache inutiles).
      *
      * @return array<string, string>
      */
@@ -189,18 +222,7 @@ final class ComposerCreateProjectRunner
         $home = getenv('HOME');
         $appData = getenv('APPDATA');
         $localAppData = getenv('LOCALAPPDATA');
-        $composerHome = getenv('COMPOSER_HOME');
-
-        if (!is_string($composerHome) || $composerHome === '') {
-            if (is_string($appData) && $appData !== '') {
-                $composerHome = $appData . DIRECTORY_SEPARATOR . 'Composer';
-            } elseif (is_string($userProfile) && $userProfile !== '') {
-                $composerHome = $userProfile . DIRECTORY_SEPARATOR . 'AppData'
-                    . DIRECTORY_SEPARATOR . 'Roaming' . DIRECTORY_SEPARATOR . 'Composer';
-            } else {
-                $composerHome = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'composer-home';
-            }
-        }
+        $composerHome = $this->health->resolveComposerHomePath();
 
         if ((!is_string($appData) || $appData === '') && is_string($userProfile) && $userProfile !== '') {
             $appData = $userProfile . DIRECTORY_SEPARATOR . 'AppData' . DIRECTORY_SEPARATOR . 'Roaming';

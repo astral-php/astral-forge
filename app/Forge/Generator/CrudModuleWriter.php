@@ -16,9 +16,7 @@ final class CrudModuleWriter
      */
     public function write(string $projectRoot, string $entity, bool $publicList = false): array
     {
-        if (!preg_match('/^[A-Z][a-zA-Z0-9]*$/', $entity)) {
-            throw new GenerationException('Nom d’entité invalide : ' . $entity);
-        }
+        $entity = EntityNaming::assertValidEntity($entity);
         if (!is_dir($projectRoot)) {
             throw new GenerationException('Projet introuvable : ' . $projectRoot);
         }

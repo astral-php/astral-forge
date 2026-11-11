@@ -2,7 +2,7 @@
   "name": "astral-php/astral-forge",
   "description": "Astral Forge — générateur de projets Astral MVC 2.1 (blueprint, plan, génération)",
   "type": "project",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "license": "MIT",
   "keywords": [
     "astral",
@@ -40,7 +40,12 @@
   "scripts": {
     "serve": "php -S 127.0.0.1:8090 -t public public/router.php",
     "test": "phpunit --configuration phpunit.xml",
-    "assets": "npm run build"
+    "assets": "npm run build",
+    "forge:env": "php bin/forge-env",
+    "forge:migrate": "php bin/console migrate",
+    "post-create-project-cmd": [
+      "@forge:env"
+    ]
   },
   "minimum-stability": "stable",
   "prefer-stable": true

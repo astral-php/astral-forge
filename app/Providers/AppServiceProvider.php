@@ -10,11 +10,13 @@ use App\Controllers\ForgeApiController;
 use App\Controllers\ForgeController;
 use App\Controllers\ForgeProjectsController;
 use App\Controllers\HomeController;
+use App\Controllers\SetupController;
 use App\Controllers\SiteController;
 use App\Controllers\ProfileController;
 use App\Controllers\UserController;
 use App\Dao\ForgeProjectDao;
 use App\Dao\UserDao;
+use App\Forge\Install\InstallGate;
 use App\Forge\Atelier\AtelierService;
 use App\Forge\Atelier\ProjectConsoleRunner;
 use App\Forge\Atelier\ProjectDirectoryRemover;
@@ -32,6 +34,7 @@ use App\Forge\Resolver\DependencyResolver;
 use App\Forge\Security\SecurePathGuard;
 use App\Forge\Job\DetachedJobLauncher;
 use App\Forge\Job\GenerationJobStore;
+use App\Forge\Runtime\RuntimeHealth;
 use App\Forge\Runtime\ToolchainResolver;
 use App\Forge\Writer\ComposerCreateProjectRunner;
 use App\Forge\Writer\PlanExecutor;
@@ -82,6 +85,17 @@ final class AppServiceProvider implements ServiceProviderInterface
             return $dao;
         });
 
+        $container->singleton(InstallGate::class, function (Container $c): InstallGate {
+            return InstallGate::forBasePath($c->make(\PDO::class), BASE_PATH);
+        });
+
+        $container->singleton(RuntimeHealth::class, function (): RuntimeHealth {
+            /** @var array{allowed_roots: list<string>} $forgeConfig */
+            $forgeConfig = require BASE_PATH . '/config/forge.php';
+
+            return new RuntimeHealth(BASE_PATH, $forgeConfig['allowed_roots']);
+        });
+
         $container->singleton(Mailer::class, function () use ($appConfig): Mailer {
             /** @var array<string, mixed> $mail */
             $mail = $appConfig['mail'] ?? [];
@@ -120,9 +134,11 @@ final class AppServiceProvider implements ServiceProviderInterface
                 (string) ($forgeConfig['php_bin'] ?? ''),
                 (string) ($forgeConfig['composer_bin'] ?? ''),
             );
+            $health = $c->make(RuntimeHealth::class);
             $composerRunner = new ComposerCreateProjectRunner(
                 $toolchain,
                 allowApacheComposer: (bool) ($forgeConfig['allow_apache_composer'] ?? false),
+                health: $health,
             );
             $executor = new PlanExecutor($composerRunner);
             $registry = new ProjectRegistry($c->make(ForgeProjectDao::class), $pathGuard);
@@ -135,7 +151,7 @@ final class AppServiceProvider implements ServiceProviderInterface
                 $executor,
                 $composerRunner,
                 new GenerationJobStore(),
-                new DetachedJobLauncher($toolchain),
+                new DetachedJobLauncher($toolchain, $health),
                 $registry,
             );
         });
@@ -157,7 +173,10 @@ final class AppServiceProvider implements ServiceProviderInterface
                 (string) ($forgeConfig['php_bin'] ?? ''),
                 (string) ($forgeConfig['composer_bin'] ?? ''),
             );
-            $composerRunner = new ComposerCreateProjectRunner($toolchain);
+            $composerRunner = new ComposerCreateProjectRunner(
+                $toolchain,
+                health: $c->make(RuntimeHealth::class),
+            );
             $console = new ProjectConsoleRunner(
                 $toolchain,
                 new CliJobStore(),
@@ -177,16 +196,22 @@ final class AppServiceProvider implements ServiceProviderInterface
         $container->bind(HomeController::class, fn(Container $c) => new HomeController(
             view:        $c->make(View::class),
             userDao:     $c->make(UserDao::class),
-            version:     (string) ($appConfig['version'] ?? '0.5.0'),
+            version:     (string) ($appConfig['version'] ?? '0.6.0'),
             githubUrl:   (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
             websiteUrl:  (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
         ));
 
         $container->bind(SiteController::class, fn(Container $c) => new SiteController(
             view:       $c->make(View::class),
-            version:    (string) ($appConfig['version'] ?? '0.5.0'),
+            version:    (string) ($appConfig['version'] ?? '0.6.0'),
             githubUrl:  (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
             websiteUrl: (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
+        ));
+
+        $container->bind(SetupController::class, fn(Container $c) => new SetupController(
+            view:    $c->make(View::class),
+            session: $c->make(Session::class),
+            install: $c->make(InstallGate::class),
         ));
 
         $container->bind(ForgeController::class, fn(Container $c) => new ForgeController(
@@ -194,6 +219,7 @@ final class AppServiceProvider implements ServiceProviderInterface
             request: $c->make(Request::class),
             session: $c->make(Session::class),
             forge:   $c->make(ProjectGenerationService::class),
+            install: $c->make(InstallGate::class),
         ));
 
         $container->bind(ForgeApiController::class, fn(Container $c) => new ForgeApiController(
@@ -201,6 +227,7 @@ final class AppServiceProvider implements ServiceProviderInterface
             request: $c->make(Request::class),
             forge:   $c->make(ProjectGenerationService::class),
             atelier: $c->make(AtelierService::class),
+            install: $c->make(InstallGate::class),
         ));
 
         $container->bind(ForgeProjectsController::class, fn(Container $c) => new ForgeProjectsController(
@@ -209,6 +236,7 @@ final class AppServiceProvider implements ServiceProviderInterface
             session:  $c->make(Session::class),
             registry: $c->make(ProjectRegistry::class),
             atelier:  $c->make(AtelierService::class),
+            install:  $c->make(InstallGate::class),
         ));
 
         $container->bind(UserController::class, fn(Container $c) => new UserController(

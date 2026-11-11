@@ -8,6 +8,8 @@ use App\Forge\Atelier\AtelierService;
 use App\Forge\Exception\GenerationException;
 use App\Forge\Exception\InvalidBlueprintException;
 use App\Forge\Exception\UnsafePathException;
+use App\Forge\Generator\EntityNaming;
+use App\Forge\Install\InstallGate;
 use App\Forge\ProjectGenerationService;
 use App\Forge\Support\Utf8;
 use Controller\AbstractController;
@@ -27,6 +29,7 @@ final class ForgeApiController extends AbstractController
         private readonly Request $request,
         private readonly ProjectGenerationService $forge,
         private readonly AtelierService $atelier,
+        private readonly InstallGate $install,
     ) {
         parent::__construct($view);
     }
@@ -34,11 +37,15 @@ final class ForgeApiController extends AbstractController
     public function environment(): JsonResponse
     {
         $status = $this->forge->environmentStatus();
+        $install = $this->install->summary();
+        $ok = $status['ok'] && !$install['needs_migrate'] && $install['error'] === null;
 
         return $this->jsonSafe([
-            'ok' => $status['ok'],
+            'ok' => $ok,
             'environment' => $status,
-        ], $status['ok'] ? 200 : 503);
+            'install' => $install,
+            'setup_url' => '/setup',
+        ], $ok ? 200 : 503);
     }
 
     public function plan(): JsonResponse
@@ -128,6 +135,17 @@ final class ForgeApiController extends AbstractController
             'ok' => true,
             'job' => $job->toArray(),
         ]);
+    }
+
+    public function entityPreview(): JsonResponse
+    {
+        $name = trim((string) $this->request->query('name', ''));
+        $preview = EntityNaming::preview($name);
+
+        return $this->jsonSafe([
+            'ok' => $preview['ok'] && $preview['error'] === null,
+            'preview' => $preview,
+        ], $preview['error'] === null ? 200 : 422);
     }
 
     /**

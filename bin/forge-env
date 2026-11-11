@@ -1,0 +1,35 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Génère .env pour une install locale opérationnelle (Win / Linux).
+ *
+ * Usage:
+ *   php bin/forge-env
+ *   php bin/forge-env --force
+ *   composer forge:env
+ */
+
+define('BASE_PATH', dirname(__DIR__));
+
+require BASE_PATH . '/vendor/autoload.php';
+
+use App\Forge\Install\EnvGenerator;
+
+$force = in_array('--force', $argv, true);
+
+try {
+    $generator = new EnvGenerator(BASE_PATH);
+    $result = $generator->generate($force);
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Erreur forge:env : ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}
+
+foreach ($result['messages'] as $message) {
+    echo $message . PHP_EOL;
+}
+
+exit($result['skipped'] && !$force ? 0 : 0);

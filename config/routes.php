@@ -9,6 +9,7 @@ use App\Controllers\ForgeController;
 use App\Controllers\ForgeProjectsController;
 use App\Controllers\HomeController;
 use App\Controllers\ProfileController;
+use App\Controllers\SetupController;
 use App\Controllers\SiteController;
 use App\Controllers\UserController;
 use Core\Auth\Middleware\AdminMiddleware;
@@ -19,6 +20,9 @@ use Core\Router;
 return function (Router $router): void {
 
     $router->get('/', HomeController::class, 'index');
+
+    $router->get('/setup', SetupController::class, 'index');
+    $router->post('/setup/migrate', SetupController::class, 'migrate');
 
     $router->get('/templates', SiteController::class, 'templates');
     $router->get('/docs', SiteController::class, 'docs');
@@ -37,6 +41,7 @@ return function (Router $router): void {
     $router->post('/forge/plan', ForgeController::class, 'plan');
     $router->post('/forge/generate', ForgeController::class, 'generate');
     $router->get('/forge/api/environment', ForgeApiController::class, 'environment');
+    $router->get('/forge/api/entity-preview', ForgeApiController::class, 'entityPreview');
     $router->get('/forge/api/jobs/:id', ForgeApiController::class, 'job');
     $router->get('/forge/api/cli-jobs/:id', ForgeApiController::class, 'cliJob');
     $router->post('/forge/api/plan', ForgeApiController::class, 'plan');

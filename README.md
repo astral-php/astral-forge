@@ -1,6 +1,6 @@
 # Astral Forge
 
-Générateur de projets **Astral MVC 2.1** — préversion **0.5.0** (`@dev` jusqu’à 1.0.0).
+Générateur de projets **Astral MVC 2.1** — préversion **0.6.0** (`@dev` jusqu’à 1.0.0).
 
 Tutoriel infos : `astral-informations/astral-forge/Dossier-technique/docs/tuto-forge.md`  
 Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/news`
@@ -11,6 +11,7 @@ Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/new
 - Génération greenfield via `astral-starter:^2.1` + modules
 - UI **Vue 3** + **astral-vite** (nova-red) — wizard `/forge/new`
 - **Atelier** : Mes projets · migrate / rollback · créer un module · supprimer projet
+- **Install 0.6** : `forge:env` + migrate CLI / setup web `/setup`
 
 ## Prérequis
 
@@ -19,7 +20,7 @@ Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/new
 - `astral-php/astral-core:^2.1`
 - `proc_open` activé (pas dans `disable_functions`)
 
-Sous **Laragon**, ajoutez Laragon au PATH (php, composer, git, node…). Si Apache n’hérite pas du PATH utilisateur, définissez dans `.env` :
+Sous **Laragon**, ajoutez Laragon au PATH (php, composer, git, node…). Si Apache n’hérite pas du PATH utilisateur, définissez dans `.env` (ou lancez `composer forge:env`) :
 
 ```env
 FORGE_PHP_BIN=D:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe
@@ -31,17 +32,24 @@ Forge préfère l’invocation **`php` + `composer.phar`** (évite les shims `.b
 **Apache Windows (Laragon)** : la génération web lance un **job en arrière-plan** (`bin/forge-job`) pour éviter le crash `mpm_winnt` — l’utilisateur reste dans l’interface.  
 Contournement sync expérimental : `FORGE_ALLOW_APACHE_COMPOSER=1`.
 
-Préflight : `GET /forge/api/environment`.
+Préflight : `GET /forge/api/environment` (toolchain + état migrations Forge).
 
 ## Install
 
 ```bash
-composer create-project astral-php/astral-forge:^0.5 astral-forge
+composer create-project astral-php/astral-forge:^0.6 astral-forge
 cd astral-forge
-cp .env.example .env
+# post-create lance déjà forge:env ; sinon :
+composer forge:env
+composer forge:migrate
+# ou UI : ouvrir /setup → « Installer / Migrer »
 ```
 
-Ou clone + `composer install`.
+Checklist **Windows (Laragon)** : PHP/Composer PATH ou `FORGE_*_BIN` · `FORGE_ALLOWED_ROOT` = parent (ex. `D:\laragon\www`) · `APP_ENV=production` pour CSS `/build`.
+
+Checklist **Linux** : droits écriture sur la racine projets pour l’utilisateur PHP (`www-data`, ex. `chgrp www-data` + `chmod 2775`) · `COMPOSER_HOME` writable (Forge utilise `storage/composer-home` en secours) · `FORGE_ALLOW_APACHE_COMPOSER=1` souvent OK sous FPM/nginx.
+
+Ou clone + `composer install` puis `forge:env` + `forge:migrate`.
 
 ## CLI
 

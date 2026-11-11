@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Forge\Job;
 
 use App\Forge\Exception\GenerationException;
+use App\Forge\Runtime\RuntimeHealth;
 use App\Forge\Runtime\ToolchainResolver;
 
 /**
@@ -12,9 +13,15 @@ use App\Forge\Runtime\ToolchainResolver;
  */
 final class DetachedJobLauncher
 {
+    private readonly RuntimeHealth $health;
+
     public function __construct(
         private readonly ToolchainResolver $toolchain = new ToolchainResolver(),
+        ?RuntimeHealth $health = null,
     ) {
+        $this->health = $health ?? new RuntimeHealth(
+            defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3),
+        );
     }
 
     /**
@@ -50,14 +57,14 @@ final class DetachedJobLauncher
         if (!is_string($appData) || $appData === '') {
             $appData = sys_get_temp_dir();
         }
-        $composerHome = getenv('COMPOSER_HOME') ?: ($appData . '\\Composer');
+        $composerHome = $this->health->resolveComposerHomePath();
         $path = getenv('PATH') ?: '';
         $log = $dir . DIRECTORY_SEPARATOR . $jobId . '.log';
 
         $lines = [
             '@echo off',
             'set "APPDATA=' . $this->batEscape($appData) . '"',
-            'set "COMPOSER_HOME=' . $this->batEscape((string) $composerHome) . '"',
+            'set "COMPOSER_HOME=' . $this->batEscape($composerHome) . '"',
             'set "COMPOSER_NO_INTERACTION=1"',
             'set "COMPOSER_DISABLE_XDEBUG=1"',
             'set "PATH=' . $this->batEscape($path) . '"',
@@ -81,8 +88,10 @@ final class DetachedJobLauncher
     private function launchUnix(string $php, string $script, string $jobId): void
     {
         $log = BASE_PATH . '/storage/forge-jobs/' . $jobId . '.log';
+        $composerHome = $this->health->resolveComposerHomePath();
         $cmd = sprintf(
-            'nohup %s %s %s >> %s 2>&1 &',
+            'COMPOSER_HOME=%s COMPOSER_NO_INTERACTION=1 nohup %s %s %s >> %s 2>&1 &',
+            escapeshellarg($composerHome),
             escapeshellarg($php),
             escapeshellarg($script),
             escapeshellarg($jobId),
