@@ -166,13 +166,16 @@ final class ToolchainResolver
     {
         $candidates = [];
         if ($this->isWindows()) {
-            $root = 'D:\\laragon\\bin\\php';
-            if (is_dir($root)) {
+            foreach ($this->laragonRoots() as $laragon) {
+                $root = $laragon . '\\bin\\php';
+                if (!is_dir($root)) {
+                    continue;
+                }
                 foreach (glob($root . '\\php-8.*\\php.exe') ?: [] as $exe) {
                     $candidates[] = $exe;
                 }
-                rsort($candidates);
             }
+            rsort($candidates);
         }
 
         if (defined('PHP_BINARY') && is_string(PHP_BINARY) && $this->isUsablePhpCliBinary(PHP_BINARY)) {
@@ -187,6 +190,26 @@ final class ToolchainResolver
         }
 
         return PhpBinaryProbe::firstWithOpenssl(array_values(array_unique($candidates)));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function laragonRoots(): array
+    {
+        $roots = [];
+        $env = getenv('LARAGON_ROOT');
+        if (is_string($env) && $env !== '') {
+            $roots[] = rtrim($env, "\\/");
+        }
+        foreach (['C:\\laragon', 'D:\\laragon'] as $root) {
+            $roots[] = $root;
+        }
+
+        return array_values(array_unique(array_filter(
+            $roots,
+            static fn (string $root): bool => is_dir($root)
+        )));
     }
 
     /**
@@ -268,7 +291,7 @@ final class ToolchainResolver
         }
 
         $pathHint = $this->isWindows()
-            ? 'Ajoutez Laragon au PATH du service Apache, ou FORGE_COMPOSER_BIN=D:\\laragon\\bin\\composer\\composer.phar'
+            ? 'Ajoutez Laragon au PATH du service Apache, ou FORGE_COMPOSER_BIN=C:\\laragon\\bin\\composer\\composer.phar'
             : 'Installez Composer sur le PATH, ou définissez FORGE_COMPOSER_BIN=/usr/local/bin/composer';
 
         throw new GenerationException(

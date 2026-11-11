@@ -140,12 +140,11 @@ final class EnvGenerator
     public function detectComposerBin(string $phpBin = ''): string
     {
         if ($this->isWindows()) {
-            $laragonPhar = 'D:\\laragon\\bin\\composer\\composer.phar';
-            if (is_file($laragonPhar)) {
-                return $laragonPhar;
-            }
-            foreach (glob('D:\\laragon\\bin\\composer\\composer.phar') ?: [] as $phar) {
-                return $phar;
+            foreach ($this->laragonRoots() as $root) {
+                $laragonPhar = $root . '\\bin\\composer\\composer.phar';
+                if (is_file($laragonPhar)) {
+                    return $laragonPhar;
+                }
             }
         }
 
@@ -196,7 +195,7 @@ final class EnvGenerator
             '# Astral Forge — généré par `composer forge:env` (ne pas committer)',
             '# ============================================================',
             'APP_NAME="Astral Forge"',
-            'APP_VERSION=0.6.1',
+            'APP_VERSION=0.6.2',
             'APP_ENV=production',
             'APP_DEBUG=true',
             'APP_TIMEZONE=Europe/Paris',
@@ -233,17 +232,39 @@ final class EnvGenerator
     /**
      * @return list<string>
      */
+    private function laragonRoots(): array
+    {
+        $roots = [];
+        $env = getenv('LARAGON_ROOT');
+        if (is_string($env) && $env !== '') {
+            $roots[] = rtrim($env, "\\/");
+        }
+        foreach (['C:\\laragon', 'D:\\laragon'] as $root) {
+            $roots[] = $root;
+        }
+
+        return array_values(array_unique(array_filter(
+            $roots,
+            static fn (string $root): bool => is_dir($root)
+        )));
+    }
+
+    /**
+     * @return list<string>
+     */
     private function laragonPhpCandidates(): array
     {
         $out = [];
-        $root = 'D:\\laragon\\bin\\php';
-        if (!is_dir($root)) {
-            return $out;
-        }
-        foreach (glob($root . '\\php-8.*') ?: [] as $dir) {
-            $exe = $dir . '\\php.exe';
-            if (is_file($exe)) {
-                $out[] = $exe;
+        foreach ($this->laragonRoots() as $laragon) {
+            $root = $laragon . '\\bin\\php';
+            if (!is_dir($root)) {
+                continue;
+            }
+            foreach (glob($root . '\\php-8.*') ?: [] as $dir) {
+                $exe = $dir . '\\php.exe';
+                if (is_file($exe)) {
+                    $out[] = $exe;
+                }
             }
         }
         // Préférer 8.3+ en tri inverse

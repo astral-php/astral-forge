@@ -1,5 +1,11 @@
 # Changelog — astral-forge
 
+## 0.6.2 — 2026-11-11
+
+### Amélioré
+
+- Détection Laragon **C:\** et **D:\** (+ `LARAGON_ROOT`) pour `FORGE_PHP_BIN` / `FORGE_COMPOSER_BIN`
+
 ## 0.6.1 — 2026-11-11
 
 ### Corrigé
