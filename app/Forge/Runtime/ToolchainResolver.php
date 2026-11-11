@@ -121,7 +121,23 @@ final class ToolchainResolver
     {
         $configured = trim($this->phpBinConfig);
         if ($configured !== '') {
+            $ssl = PhpBinaryProbe::opensslStatus($configured);
+            if ($ssl === 'yes' || $ssl === 'unknown') {
+                // unknown = stub / non sondable → respecter la config (tests + bins custom)
+                return $configured;
+            }
+            // FORGE_PHP_BIN sans openssl (ex. Laragon 8.5 nts) → bascule auto si un autre PHP OK
+            $better = $this->findPhpWithOpenssl();
+            if ($better !== null) {
+                return $better;
+            }
+
             return $configured;
+        }
+
+        $better = $this->findPhpWithOpenssl();
+        if ($better !== null) {
+            return $better;
         }
 
         // Sous Apache Windows, PHP_BINARY vaut souvent httpd.exe — inutilisable pour CLI.
@@ -144,6 +160,33 @@ final class ToolchainResolver
         }
 
         return $this->isWindows() ? 'php.exe' : 'php';
+    }
+
+    private function findPhpWithOpenssl(): ?string
+    {
+        $candidates = [];
+        if ($this->isWindows()) {
+            $root = 'D:\\laragon\\bin\\php';
+            if (is_dir($root)) {
+                foreach (glob($root . '\\php-8.*\\php.exe') ?: [] as $exe) {
+                    $candidates[] = $exe;
+                }
+                rsort($candidates);
+            }
+        }
+
+        if (defined('PHP_BINARY') && is_string(PHP_BINARY) && $this->isUsablePhpCliBinary(PHP_BINARY)) {
+            $candidates[] = PHP_BINARY;
+        }
+
+        $fromPath = $this->isWindows()
+            ? ($this->findInPath('php.exe') ?? $this->findInPath('php'))
+            : $this->findInPath('php');
+        if ($fromPath !== null) {
+            $candidates[] = $fromPath;
+        }
+
+        return PhpBinaryProbe::firstWithOpenssl(array_values(array_unique($candidates)));
     }
 
     /**

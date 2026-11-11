@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Forge\Writer;
 
 use App\Forge\Exception\GenerationException;
+use App\Forge\Runtime\PhpBinaryProbe;
 use App\Forge\Runtime\RuntimeHealth;
 use App\Forge\Runtime\ToolchainResolver;
 use App\Forge\Support\Utf8;
@@ -74,6 +75,18 @@ final class ComposerCreateProjectRunner
             $status['ok'] = false;
         }
 
+        $phpBin = is_string($status['php'] ?? null) ? (string) $status['php'] : '';
+        $openssl = $phpBin !== ''
+            ? PhpBinaryProbe::hasOpenssl($phpBin)
+            : extension_loaded('openssl');
+        $status['openssl'] = $openssl;
+        if (!$openssl) {
+            $status['errors'][] = 'PHP sans openssl — Composer Packagist HTTPS impossible en TLS. '
+                . 'Forge bascule sur un PHP openssl si disponible, sinon disable-tls local. '
+                . 'Corrigez FORGE_PHP_BIN (ex. Laragon php-8.3) ou `composer forge:env --force`.';
+            // Ne bloque pas le préflight : fallback disable-tls / autre PHP
+        }
+
         $roots = $this->health->allowedRootsStatus();
         $writableRoot = false;
         foreach ($roots as $root) {
@@ -125,7 +138,7 @@ final class ComposerCreateProjectRunner
         ];
 
         $cwd = is_dir(dirname($directory)) ? dirname($directory) : null;
-        $env = $this->buildEnv();
+        $env = $this->buildEnv($resolved->phpBin);
         $options = ['bypass_shell' => $resolved->bypassShell];
 
         $process = @proc_open($cmd, $descriptors, $pipes, $cwd, $env, $options);
@@ -162,6 +175,12 @@ final class ComposerCreateProjectRunner
                 . ($detail !== '' ? ' : ' . $detail : '.');
             if ($this->health->looksLikePermissionError($detail)) {
                 $message .= ' — ' . $this->health->permissionDeniedHint($directory);
+            }
+            if ($this->looksLikeOpensslError($detail)) {
+                $message .= ' — PHP sans extension openssl. '
+                    . 'Définissez FORGE_PHP_BIN vers un PHP avec openssl (ex. Laragon php-8.3.x), '
+                    . 'ou relancez `composer forge:env --force`. '
+                    . 'Forge active aussi disable-tls local si openssl manque.';
             }
             throw new GenerationException($message);
         }
@@ -215,7 +234,7 @@ final class ComposerCreateProjectRunner
      *
      * @return array<string, string>
      */
-    private function buildEnv(): array
+    private function buildEnv(string $phpBin = ''): array
     {
         $path = getenv('PATH');
         $userProfile = getenv('USERPROFILE');
@@ -223,6 +242,7 @@ final class ComposerCreateProjectRunner
         $appData = getenv('APPDATA');
         $localAppData = getenv('LOCALAPPDATA');
         $composerHome = $this->health->resolveComposerHomePath();
+        $this->ensureComposerTlsConfig($composerHome, $phpBin);
 
         if ((!is_string($appData) || $appData === '') && is_string($userProfile) && $userProfile !== '') {
             $appData = $userProfile . DIRECTORY_SEPARATOR . 'AppData' . DIRECTORY_SEPARATOR . 'Roaming';
@@ -250,6 +270,47 @@ final class ComposerCreateProjectRunner
         }
 
         return $env;
+    }
+
+    /**
+     * Sans openssl, Composer refuse le TLS — en local Forge on autorise disable-tls.
+     */
+    private function ensureComposerTlsConfig(string $composerHome, string $phpBin): void
+    {
+        if ($phpBin !== '' && PhpBinaryProbe::hasOpenssl($phpBin)) {
+            return;
+        }
+        if ($phpBin === '' && extension_loaded('openssl')) {
+            return;
+        }
+
+        if (!is_dir($composerHome) && !@mkdir($composerHome, 0775, true) && !is_dir($composerHome)) {
+            return;
+        }
+
+        $configFile = $composerHome . DIRECTORY_SEPARATOR . 'config.json';
+        $config = [];
+        if (is_file($configFile)) {
+            $decoded = json_decode((string) file_get_contents($configFile), true);
+            if (is_array($decoded)) {
+                $config = $decoded;
+            }
+        }
+
+        $config['disable-tls'] = true;
+        $config['secure-http'] = false;
+        @file_put_contents(
+            $configFile,
+            json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n"
+        );
+    }
+
+    private function looksLikeOpensslError(string $detail): bool
+    {
+        $lower = strtolower($detail);
+
+        return str_contains($lower, 'openssl')
+            && (str_contains($lower, 'ssl/tls') || str_contains($lower, 'disable-tls'));
     }
 
     private function cleanupTemp(string ...$files): void

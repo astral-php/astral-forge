@@ -1,5 +1,11 @@
 # Changelog — astral-forge
 
+## 0.6.1 — 2026-11-11
+
+### Corrigé
+
+- Génération : PHP Laragon **sans openssl** (ex. 8.5 nts) cassait `composer create-project` — préférence PHP **avec openssl**, sinon `disable-tls` local dans `COMPOSER_HOME`
+
 ## 0.6.0 — 2026-11-11
 
 Install from-scratch Win/Linux — préversion **`@dev`** (pas de news site tant que `^0.6` non stable).

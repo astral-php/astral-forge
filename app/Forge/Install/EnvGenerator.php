@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Forge\Install;
 
+use App\Forge\Runtime\PhpBinaryProbe;
+
 /**
  * Génère un .env local opérationnel (install from scratch Win/Linux).
  *
@@ -92,10 +94,12 @@ final class EnvGenerator
 
     public function detectPhpBin(): string
     {
+        $candidates = [];
+
         if ($this->isWindows()) {
             foreach ($this->laragonPhpCandidates() as $candidate) {
                 if ($this->isRunnableFile($candidate)) {
-                    return $candidate;
+                    $candidates[] = $candidate;
                 }
             }
         }
@@ -105,26 +109,32 @@ final class EnvGenerator
             $base = strtolower(basename($binary));
             // Sous Apache/FPM, PHP_BINARY peut être httpd — ignorer
             if (!str_contains($base, 'httpd') && !str_contains($base, 'apache') && !str_contains($base, 'nginx')) {
-                return $binary;
+                $candidates[] = $binary;
             }
         }
 
         foreach (['php8.5', 'php8.4', 'php8.3', 'php'] as $cmd) {
             $resolved = $this->which($cmd);
             if ($resolved !== null) {
-                return $resolved;
+                $candidates[] = $resolved;
             }
         }
 
         if (!$this->isWindows()) {
             foreach (['/usr/bin/php8.5', '/usr/bin/php8.4', '/usr/bin/php8.3', '/usr/bin/php'] as $path) {
                 if ($this->isRunnableFile($path)) {
-                    return $path;
+                    $candidates[] = $path;
                 }
             }
         }
 
-        return '';
+        $candidates = array_values(array_unique($candidates));
+        $withSsl = PhpBinaryProbe::firstWithOpenssl($candidates);
+        if ($withSsl !== null) {
+            return $withSsl;
+        }
+
+        return $candidates[0] ?? '';
     }
 
     public function detectComposerBin(string $phpBin = ''): string
@@ -186,7 +196,7 @@ final class EnvGenerator
             '# Astral Forge — généré par `composer forge:env` (ne pas committer)',
             '# ============================================================',
             'APP_NAME="Astral Forge"',
-            'APP_VERSION=0.6.0',
+            'APP_VERSION=0.6.1',
             'APP_ENV=production',
             'APP_DEBUG=true',
             'APP_TIMEZONE=Europe/Paris',
