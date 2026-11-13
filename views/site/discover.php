@@ -24,7 +24,7 @@
         <ul>
             <li><strong>Local mono-utilisateur</strong> — pas de compte requis pour générer</li>
             <li>Auth starter masquée dans la nav (réactivable plus tard si multi-dev)</li>
-            <li>Préversion jusqu’à <strong>1.0.0</strong></li>
+            <li>Version stable <strong>1.0.0</strong></li>
         </ul>
 
         <h2>Ce que Forge ne fait pas</h2>

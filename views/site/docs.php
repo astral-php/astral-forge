@@ -67,7 +67,7 @@ sudo find /chemin/www -type f -exec chmod 664 {} \;</code></pre>
         <ul>
             <li>Greenfield uniquement (destination absente ou vide)</li>
             <li>Pas de FTP / deploy (outil interne <code>astral-deploy</code>, hors Forge)</li>
-            <li>Préversion <code>@dev</code> jusqu’à 1.0.0</li>
+            <li>Recettes MVP : blank · blog-lite · api-json (élargissement apps → feuille 2.2)</li>
             <li>Chemins hors <code>FORGE_ALLOWED_ROOT</code> refusés</li>
         </ul>
     </div>

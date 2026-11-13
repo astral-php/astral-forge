@@ -196,14 +196,14 @@ final class AppServiceProvider implements ServiceProviderInterface
         $container->bind(HomeController::class, fn(Container $c) => new HomeController(
             view:        $c->make(View::class),
             userDao:     $c->make(UserDao::class),
-            version:     (string) ($appConfig['version'] ?? '0.6.3'),
+            version:     (string) ($appConfig['version'] ?? '1.0.0'),
             githubUrl:   (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
             websiteUrl:  (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
         ));
 
         $container->bind(SiteController::class, fn(Container $c) => new SiteController(
             view:       $c->make(View::class),
-            version:    (string) ($appConfig['version'] ?? '0.6.3'),
+            version:    (string) ($appConfig['version'] ?? '1.0.0'),
             githubUrl:  (string) ($appConfig['github_url'] ?? 'https://github.com/astral-php/astral-forge'),
             websiteUrl: (string) ($appConfig['website_url'] ?? 'https://astral-php.dev'),
         ));

@@ -1,6 +1,6 @@
 # Astral Forge
 
-Générateur de projets **Astral MVC 2.1** — préversion **0.6.3** (`@dev` jusqu’à 1.0.0).
+Générateur de projets **Astral MVC 2.1** — version **1.0.0** (stable).
 
 Tutoriel infos : `astral-informations/astral-forge/Dossier-technique/docs/tuto-forge.md`  
 Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/news`
@@ -37,7 +37,7 @@ Préflight : `GET /forge/api/environment` (toolchain + état migrations Forge).
 ## Install
 
 ```bash
-composer create-project astral-php/astral-forge:^0.6 astral-forge
+composer create-project astral-php/astral-forge:^1.0 astral-forge
 cd astral-forge
 # post-create lance déjà forge:env ; sinon :
 composer forge:env

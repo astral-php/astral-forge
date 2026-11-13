@@ -1,5 +1,15 @@
 # Changelog — astral-forge
 
+## 1.0.0 — 2026-11-13
+
+### Stable
+
+- Contrat stable = périmètre **0.6.3** QA (Win Laragon C:/D: · Linux WSL) — **sans** nouvelles recettes apps
+- Install from-scratch : `forge:env` · `/setup` · `forge:migrate` · openssl · droits Linux documentés
+- Atelier : Mes projets · migrate / rollback · module EN singulier · blank / blog-lite / api-json
+- Commande : `composer create-project astral-php/astral-forge:^1.0`
+- Suite (Nova · recettes forum/shop/hub · Forum next) → **feuille 2.2**
+
 ## 0.6.3 — 2026-11-13
 
 ### Doc

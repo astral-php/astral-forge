@@ -39,7 +39,7 @@ final class EnvGeneratorTest extends TestCase
         self::assertFileExists($this->tmpDir . '/.env');
         $contents = (string) file_get_contents($this->tmpDir . '/.env');
         self::assertStringContainsString('APP_ENV=production', $contents);
-        self::assertStringContainsString('APP_VERSION=0.6.3', $contents);
+        self::assertStringContainsString('APP_VERSION=1.0.0', $contents);
         self::assertStringContainsString('FORGE_ALLOWED_ROOT=', $contents);
         self::assertSame(dirname($this->tmpDir), $result['allowed_root']);
     }
