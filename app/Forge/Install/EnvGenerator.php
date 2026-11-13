@@ -195,7 +195,7 @@ final class EnvGenerator
             '# Astral Forge — généré par `composer forge:env` (ne pas committer)',
             '# ============================================================',
             'APP_NAME="Astral Forge"',
-            'APP_VERSION=0.6.2',
+            'APP_VERSION=0.6.3',
             'APP_ENV=production',
             'APP_DEBUG=true',
             'APP_TIMEZONE=Europe/Paris',

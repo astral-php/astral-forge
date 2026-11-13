@@ -1,6 +1,6 @@
 # Astral Forge
 
-Générateur de projets **Astral MVC 2.1** — préversion **0.6.2** (`@dev` jusqu’à 1.0.0).
+Générateur de projets **Astral MVC 2.1** — préversion **0.6.3** (`@dev` jusqu’à 1.0.0).
 
 Tutoriel infos : `astral-informations/astral-forge/Dossier-technique/docs/tuto-forge.md`  
 Pages locales : `/docs` · `/templates` · `/discover` · `/extensions` · `/news`
@@ -45,9 +45,25 @@ composer forge:migrate
 # ou UI : ouvrir /setup → « Installer / Migrer »
 ```
 
-Checklist **Windows (Laragon)** : PHP/Composer PATH ou `FORGE_*_BIN` · `FORGE_ALLOWED_ROOT` = parent (ex. `D:\laragon\www`) · `APP_ENV=production` pour CSS `/build`.
+Checklist **Windows (Laragon)** : PHP/Composer PATH ou `FORGE_*_BIN` · `FORGE_ALLOWED_ROOT` = parent (ex. `D:\laragon\www` ou `C:\laragon\www`) · PHP CLI avec extension **`openssl`** · `APP_ENV=production` pour CSS `/build`.
 
-Checklist **Linux** : droits écriture sur la racine projets pour l’utilisateur PHP (`www-data`, ex. `chgrp www-data` + `chmod 2775`) · `COMPOSER_HOME` writable (Forge utilise `storage/composer-home` en secours) · `FORGE_ALLOW_APACHE_COMPOSER=1` souvent OK sous FPM/nginx.
+Checklist **Linux** (nginx / php-fpm) :
+
+- `FORGE_ALLOWED_ROOT` = dossier parent des projets (ex. `/home/user/www`)
+- L’utilisateur PHP (**souvent `www-data`**) doit pouvoir **créer, lire, modifier et supprimer** sous cette racine
+- Modèle recommandé (groupe `www-data`, sticky bit sur les dossiers) :
+
+```bash
+sudo chgrp -R www-data /home/user/www
+sudo usermod -aG www-data "$USER"   # si vous générez aussi en CLI
+sudo find /home/user/www -type d -exec chmod 2775 {} \;
+sudo find /home/user/www -type f -exec chmod 664 {} \;
+```
+
+- Sans **écriture sur les dossiers** (bit `w` groupe), la génération peut réussir puis la **purge atelier** échoue (`Impossible de supprimer le fichier…`) — ce n’est **pas** un bug Forge, c’est un droit OS
+- `COMPOSER_HOME` writable (Forge utilise `storage/composer-home` en secours)
+- `FORGE_ALLOW_APACHE_COMPOSER=1` souvent OK sous FPM/nginx
+- Extension PHP **`openssl`** requise pour Composer / Packagist HTTPS
 
 Ou clone + `composer install` puis `forge:env` + `forge:migrate`.
 

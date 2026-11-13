@@ -55,7 +55,15 @@ composer serve</code></pre>
         <h2>5. Auth (shell starter)</h2>
         <p>Hérité d’astral-starter ; <strong>non requis</strong> pour générer. Inscription / connexion masquées dans la nav (mode mono-user). Routes <code>/login</code>, <code>/register</code> encore présentes en accès direct.</p>
 
-        <h2>6. Limites</h2>
+        <h2>6. Droits Linux (nginx / php-fpm)</h2>
+        <p>Forge web tourne souvent sous <code>www-data</code>. Sous <code>FORGE_ALLOWED_ROOT</code>, cet utilisateur doit pouvoir <strong>créer, lire, modifier et supprimer</strong> les projets (génération + atelier purge).</p>
+        <pre class="code-block"><code>sudo chgrp -R www-data /chemin/www
+sudo find /chemin/www -type d -exec chmod 2775 {} \;
+sudo find /chemin/www -type f -exec chmod 664 {} \;</code></pre>
+        <p>Si la purge affiche <em>Impossible de supprimer le fichier…</em> : le dossier n’est pas inscriptible pour le groupe PHP — corrigez les droits OS (pas un défaut métier Forge).</p>
+        <p>Prérequis Composer : extension PHP <code>openssl</code> sur le binaire <code>FORGE_PHP_BIN</code>.</p>
+
+        <h2>7. Limites</h2>
         <ul>
             <li>Greenfield uniquement (destination absente ou vide)</li>
             <li>Pas de FTP / deploy (outil interne <code>astral-deploy</code>, hors Forge)</li>

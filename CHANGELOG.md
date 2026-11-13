@@ -1,5 +1,12 @@
 # Changelog — astral-forge
 
+## 0.6.3 — 2026-11-13
+
+### Doc
+
+- Prérequis utilisateur : extension PHP **`openssl`** (README + `/docs` + `.env.example`)
+- Linux : droits **création / lecture / modification / suppression** sous `FORGE_ALLOWED_ROOT` pour `www-data` (purge atelier = droits OS, pas bug Forge)
+
 ## 0.6.2 — 2026-11-11
 
 ### Amélioré
